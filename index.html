@@ -1,2431 +1,748 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PLD Lockdown: Code Black</title>
-  <!-- V7: Socratic hint controls added to all mission questions and the exit pass. -->
-  <style>
-    :root {
-      --bg: #04070d;
-      --bg2: #07101d;
-      --panel: #0c1525;
-      --panel2: #101d33;
-      --panel3: #14243d;
-      --ink: #eef6ff;
-      --soft: #b9c8dc;
-      --muted: #8090a9;
-      --cyan: #58e4ff;
-      --cyan2: #1c9db7;
-      --violet: #a997ff;
-      --amber: #ffc85c;
-      --green: #61e8a8;
-      --red: #ff6379;
-      --line: rgba(176, 208, 239, .16);
-      --shadow: 0 20px 60px rgba(0, 0, 0, .46);
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Founder's Day Mystery · Case File</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12142A; --ink-soft:#20233F; --paper:#FBF8F1; --paper-dim:#F1ECE0;
+    --coral:#FF6552; --coral-dim:#E8523F; --mint:#15B294; --gold:#FFC857; --violet:#7A6FF0;
+    --line:rgba(251,248,241,0.14); --line-light:rgba(21,23,43,0.12);
+    --font-display:'Space Grotesk', sans-serif; --font-body:'Inter', sans-serif; --font-mono:'JetBrains Mono', monospace;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    font-family:var(--font-body); color:var(--paper); background:var(--ink); overflow:hidden;
+    touch-action:manipulation; -webkit-text-size-adjust:100%;
+  }
+  ::selection{ background:var(--gold); color:var(--ink); }
+  h1,h2,h3{ font-family:var(--font-display); line-height:1.1; letter-spacing:-0.01em; }
+  p{ line-height:1.6; }
 
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      color: var(--ink);
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.5;
-      background:
-        linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px),
-        radial-gradient(circle at 14% 2%, rgba(88,228,255,.13), transparent 27%),
-        radial-gradient(circle at 87% 9%, rgba(169,151,255,.13), transparent 30%),
-        var(--bg);
-      background-size: 34px 34px, 34px 34px, auto, auto, auto;
-    }
+  .screen{ display:none; min-height:100vh; min-height:100dvh; flex-direction:column; align-items:center; justify-content:center; padding:calc(56px + 5vh) 6vw 5vh; }
+  .screen.active{ display:flex; }
+  .screen-inner{ max-width:760px; width:100%; }
 
-    button, input { font: inherit; }
-    button { cursor: pointer; }
+  .top-hud{
+    position:fixed; top:0; left:0; right:0; height:56px; z-index:100; background:var(--ink-soft);
+    border-bottom:1px solid var(--line); display:flex; align-items:center; gap:0.8rem; padding:0 3vw;
+  }
+  .hud-name{ font-family:var(--font-mono); font-size:0.75rem; opacity:0.8; white-space:nowrap; }
+  .hud-stages{ display:flex; gap:0.4rem; flex:1; justify-content:center; }
+  .hud-stage-dot{
+    width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line); display:flex; align-items:center;
+    justify-content:center; font-size:0.8rem; opacity:0.5; transition:all 0.3s ease;
+  }
+  .hud-stage-dot.active{ border-color:var(--gold); opacity:1; background:rgba(255,200,87,0.12); }
+  .hud-stage-dot.complete{ border-color:var(--mint); background:var(--mint); opacity:1; }
+  .hud-timer{
+    font-family:var(--font-mono); font-weight:700; font-size:0.95rem; background:var(--ink); border:1px solid var(--line);
+    border-radius:20px; padding:0.3rem 0.8rem; white-space:nowrap;
+  }
+  .hud-timer.urgent{ color:var(--coral); border-color:var(--coral); animation:pulse 1s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ opacity:1; } 50%{ opacity:0.5; } }
+  .hud-reset{
+    font-family:var(--font-mono); font-size:0.65rem; background:none; border:1px solid var(--line); color:var(--paper);
+    border-radius:20px; padding:0.35rem 0.6rem; cursor:pointer; opacity:0.6; white-space:nowrap;
+  }
 
-    .case-header {
-      position: relative;
-      overflow: hidden;
-      padding: 30px 24px 80px;
-      background:
-        linear-gradient(120deg, rgba(3,8,15,.97), rgba(8,24,42,.95) 62%, rgba(32,18,58,.92)),
-        var(--bg2);
-      border-bottom: 1px solid rgba(255,99,121,.3);
-    }
-    .case-header::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background: linear-gradient(90deg, transparent 0 47%, rgba(88,228,255,.06) 50%, transparent 53% 100%);
-      background-size: 430px 100%;
-      animation: scan 7s linear infinite;
-    }
-    .case-header::after {
-      content: "";
-      position: absolute;
-      width: 500px;
-      height: 500px;
-      right: -180px;
-      top: -260px;
-      border: 1px solid rgba(255,99,121,.15);
-      border-radius: 50%;
-      box-shadow: 0 0 0 48px rgba(255,99,121,.025), 0 0 0 102px rgba(88,228,255,.025);
-    }
-    @keyframes scan { to { background-position: 860px 0; } }
+  /* ---------- Intro ---------- */
+  .badge-icon{ font-size:3rem; margin-bottom:1rem; }
+  .eyebrow{ font-family:var(--font-mono); font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); margin-bottom:0.9rem; display:flex; align-items:center; gap:0.6rem; }
+  .eyebrow::before{ content:""; width:22px; height:2px; background:var(--gold); display:inline-block; }
+  h1{ font-size:clamp(2.2rem,5.5vw,3.6rem); font-weight:700; margin-bottom:0.8rem; }
+  .lede{ font-size:1.05rem; opacity:0.85; max-width:56ch; margin-bottom:1.6rem; }
+  .name-input-row{ display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.4rem; }
+  .name-input-row input{
+    flex:1; min-width:220px; font-family:var(--font-body); font-size:1rem; padding:0.8rem 1rem; border-radius:10px;
+    border:1px solid var(--line); background:var(--ink-soft); color:var(--paper); min-height:48px;
+  }
+  .big-btn{
+    font-family:var(--font-mono); font-weight:700; font-size:0.95rem; background:var(--gold); color:var(--ink);
+    border:none; border-radius:30px; padding:0.9rem 1.8rem; cursor:pointer; min-height:48px; touch-action:manipulation;
+  }
+  .big-btn:hover{ opacity:0.88; }
+  .big-btn:disabled{ opacity:0.4; cursor:default; }
+  .rules-list{ display:flex; flex-direction:column; gap:0.5rem; margin-top:1.6rem; font-size:0.88rem; opacity:0.8; }
+  .rules-list div{ display:flex; gap:0.6rem; }
 
-    .header-inner { max-width: 1160px; margin: 0 auto; position: relative; z-index: 1; }
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      border: 1px solid rgba(255,99,121,.42);
-      background: rgba(255,99,121,.09);
-      color: #ffd0d7;
-      border-radius: 999px;
-      padding: 7px 12px;
-      font-size: .75rem;
-      font-weight: 900;
-      letter-spacing: .12em;
-      text-transform: uppercase;
-    }
-    h1 {
-      margin: 18px 0 8px;
-      font-size: clamp(2.25rem, 5.4vw, 4.8rem);
-      line-height: 1.01;
-      letter-spacing: -.052em;
-      text-shadow: 0 0 40px rgba(88,228,255,.13);
-    }
-    .subtitle { max-width: 850px; margin: 0; color: #cad8eb; font-size: 1.08rem; }
-    .header-grid {
-      display: grid;
-      grid-template-columns: 1.25fr .75fr;
-      gap: 18px;
-      align-items: end;
-      margin-top: 26px;
-    }
-    .briefing {
-      padding: 16px 18px;
-      border-left: 4px solid var(--red);
-      border-radius: 0 14px 14px 0;
-      background: rgba(0,0,0,.28);
-      color: #d2deef;
-    }
-    .briefing strong { color: #ffbdc6; }
-    .briefing .simulation-note { display: block; margin-top: 7px; color: #8fa0ba; font-size: .85rem; }
+  /* ---------- Stage narrative ---------- */
+  .stage-label{ font-family:var(--font-mono); font-size:0.75rem; color:var(--gold); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:0.5rem; }
+  .stage-title{ font-size:clamp(1.6rem,3.6vw,2.3rem); font-weight:700; margin-bottom:0.8rem; }
+  .flavor-text{ background:var(--ink-soft); border-left:3px solid var(--gold); border-radius:8px; padding:1rem 1.3rem; font-size:0.94rem; opacity:0.92; margin-bottom:1.6rem; }
 
-    .timer-card {
-      justify-self: end;
-      min-width: 285px;
-      padding: 16px;
-      border: 1px solid rgba(255,99,121,.25);
-      border-radius: 18px;
-      background: rgba(5,11,21,.66);
-      box-shadow: inset 0 0 28px rgba(255,99,121,.045);
-      backdrop-filter: blur(9px);
-    }
-    .timer-card.expired { border-color: var(--red); box-shadow: 0 0 35px rgba(255,99,121,.18); }
-    .timer-label { color: #9bacbf; font-size: .76rem; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
-    #timer { font-size: 2.38rem; font-weight: 950; letter-spacing: .03em; font-variant-numeric: tabular-nums; }
-    .timer-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  /* ---------- Question components ---------- */
+  .qgrid{ display:flex; flex-direction:column; gap:1rem; }
+  .qblock{ border:1px solid var(--line); border-radius:14px; padding:1.1rem 1.3rem; background:var(--ink-soft); }
+  .qblock.solved{ border-color:var(--mint); }
+  .qblock.thinking{ border-left:3px solid var(--violet); }
+  .qtag{ font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--gold); display:flex; align-items:center; gap:0.5rem; margin-bottom:0.5rem; }
+  .think-flag{ background:var(--violet); color:#fff; font-size:0.65rem; padding:0.15rem 0.5rem; border-radius:10px; font-weight:700; }
+  .qprompt{ font-size:0.96rem; font-weight:500; margin-bottom:0.7rem; }
+  .mcq-options{ display:flex; flex-wrap:wrap; gap:0.55rem; }
+  .opt-btn{
+    font-family:var(--font-mono); font-size:0.86rem; padding:0.6rem 1rem; border-radius:8px; min-height:44px;
+    border:1px solid var(--line); background:transparent; color:var(--paper); cursor:pointer; transition:all 0.2s ease;
+    touch-action:manipulation;
+  }
+  .opt-btn:hover:not(:disabled){ border-color:var(--gold); }
+  .opt-btn.correct{ background:var(--mint); border-color:var(--mint); color:var(--ink); }
+  .opt-btn.incorrect{ background:var(--coral); border-color:var(--coral); color:#fff; }
+  .opt-btn:disabled{ cursor:default; opacity:0.92; }
 
-    .btn {
-      border: 0;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-weight: 880;
-      transition: transform .16s ease, opacity .16s ease, box-shadow .16s ease;
-    }
-    .btn:hover { transform: translateY(-1px); }
-    .btn-primary { color: #081016; background: var(--cyan); box-shadow: 0 8px 22px rgba(88,228,255,.18); }
-    .btn-alert { color: white; background: linear-gradient(135deg, #b51f3c, #73132a); box-shadow: 0 8px 22px rgba(255,99,121,.18); }
-    .btn-secondary { color: white; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); }
-    .btn-dark { color: white; background: linear-gradient(135deg, #233554, #1b2944); border: 1px solid rgba(88,228,255,.16); }
-    .btn-soft { color: #172033; background: #e8eef7; }
-    .btn-danger { color: #ffc1ca; background: #3c1520; border: 1px solid rgba(255,99,121,.28); }
-    .btn[disabled] { cursor: not-allowed; opacity: .42; transform: none; }
+  .formula-row, .numeric-row{ display:flex; align-items:center; gap:0.55rem; flex-wrap:wrap; font-family:var(--font-mono); font-size:0.95rem; margin:0.5rem 0; }
+  .formula-row input, .numeric-row input{
+    width:4.2rem; text-align:center; font-family:var(--font-mono); font-size:1rem; min-height:44px;
+    padding:0.38rem; border-radius:6px; border:1px solid var(--line); background:var(--ink); color:var(--paper);
+  }
+  .numeric-row input{ width:6.4rem; }
+  .check-btn{
+    font-family:var(--font-mono); font-size:0.8rem; font-weight:600; background:var(--gold); color:var(--ink);
+    border:none; border-radius:20px; padding:0.6rem 1.1rem; cursor:pointer; min-height:44px; touch-action:manipulation;
+  }
+  .check-btn:disabled{ opacity:0.5; cursor:default; }
+  .feedback{ font-size:0.85rem; font-weight:600; margin-top:0.5rem; min-height:1.2em; }
+  .feedback.good{ color:var(--mint); }
+  .feedback.bad{ color:#FF9C8F; }
 
-    .mission-rail {
-      position: fixed;
-      z-index: 80;
-      right: 14px;
-      top: 50%;
-      width: 92px;
-      transform: translateY(-50%);
-      display: grid;
-      gap: 10px;
-      padding: 10px;
-      border: 1px solid rgba(88,228,255,.2);
-      border-radius: 18px;
-      background: rgba(4,10,19,.93);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-    .rail-title { color: #8fa1ba; font-size: .62rem; font-weight: 900; letter-spacing: .11em; text-align: center; text-transform: uppercase; }
-    .code-mini { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
-    .code-slot {
-      display: grid;
-      place-items: center;
-      height: 31px;
-      border: 1px solid rgba(88,228,255,.18);
-      border-radius: 7px;
-      background: #08111f;
-      color: #63738e;
-      font-weight: 950;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    }
-    .code-slot.unlocked { color: var(--cyan); border-color: rgba(88,228,255,.55); background: rgba(88,228,255,.08); text-shadow: 0 0 12px rgba(88,228,255,.5); }
-    .rail-divider { height: 1px; background: rgba(176,208,239,.14); }
-    .badge-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
-    .badge-medal {
-      position: relative;
-      display: grid;
-      place-items: center;
-      width: 32px;
-      height: 32px;
-      justify-self: center;
-      border: 1px solid rgba(176,208,239,.18);
-      border-radius: 50%;
-      color: #66758f;
-      background: #0a1322;
-      font-size: .48rem;
-      font-weight: 950;
-      letter-spacing: .02em;
-      filter: grayscale(1);
-      opacity: .6;
-    }
-    .badge-medal.earned { color: #061016; background: linear-gradient(145deg, var(--amber), #ffe8a1); border-color: #ffe5a0; filter: none; opacity: 1; box-shadow: 0 0 16px rgba(255,200,92,.22); }
-    .badge-medal.first-try::after { content: "★"; position: absolute; right: -4px; top: -5px; color: white; font-size: .72rem; text-shadow: 0 0 7px var(--cyan); }
-    .badge-medal::before {
-      content: attr(data-label);
-      position: absolute;
-      right: 44px;
-      top: 50%;
-      width: 180px;
-      transform: translateY(-50%);
-      padding: 7px 9px;
-      border: 1px solid rgba(88,228,255,.2);
-      border-radius: 8px;
-      background: #07101d;
-      color: #d9e5f4;
-      font-size: .7rem;
-      font-weight: 750;
-      line-height: 1.25;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .15s ease;
-      box-shadow: var(--shadow);
-    }
-    .badge-medal:hover::before, .badge-medal:focus::before { opacity: 1; }
+  .continue-wrap{ margin-top:1.8rem; text-align:center; }
+  .continue-wrap .hint-note{ font-family:var(--font-mono); font-size:0.75rem; opacity:0.55; margin-top:0.6rem; }
 
-    .main-shell { max-width: 1160px; margin: -42px auto 70px; padding: 0 24px; position: relative; z-index: 2; }
-    .identity-card {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1.2fr;
-      gap: 14px;
-      align-items: end;
-      padding: 18px;
-      border: 1px solid rgba(88,228,255,.16);
-      border-radius: 18px;
-      background: rgba(12,21,37,.97);
-      box-shadow: var(--shadow);
-    }
-    .field label { display: block; margin-bottom: 6px; color: #95a6bf; font-size: .8rem; font-weight: 850; }
-    .field input, .answer-line input, .final-code-input {
-      width: 100%;
-      padding: 11px 12px;
-      border: 1px solid rgba(176,208,239,.22);
-      border-radius: 10px;
-      outline: none;
-      color: var(--ink);
-      background: #07101d;
-    }
-    .field input:focus, .answer-line input:focus, .final-code-input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(88,228,255,.1); }
-    .progress-meta { display: flex; justify-content: space-between; margin-bottom: 7px; color: #95a6bf; font-size: .8rem; font-weight: 850; }
-    .progress-track { height: 12px; overflow: hidden; border: 1px solid rgba(176,208,239,.12); border-radius: 999px; background: #07101d; }
-    .progress-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--violet), var(--amber)); transition: width .35s ease; }
+  /* ---------- Twist / reveal ---------- */
+  .reveal-card{ background:var(--ink-soft); border:1px solid var(--gold); border-radius:14px; padding:1.6rem; margin-top:1rem; }
+  .reveal-card p{ font-size:0.98rem; opacity:0.92; }
 
-    .objectives { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
-    .objective-chip { padding: 7px 11px; border: 1px solid rgba(176,208,239,.13); border-radius: 999px; background: rgba(12,21,37,.84); color: #b8c7db; font-size: .8rem; font-weight: 760; }
+  /* ---------- Results: Case File ---------- */
+  .case-file{
+    background:var(--paper); color:var(--ink); border-radius:16px; padding:2.2rem clamp(1.4rem,4vw,2.6rem);
+    position:relative; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.4);
+  }
+  .case-stamp{
+    position:absolute; top:1.6rem; right:-1.5rem; transform:rotate(18deg); border:4px solid var(--coral); color:var(--coral);
+    font-family:var(--font-display); font-weight:700; font-size:1.3rem; padding:0.4rem 2.2rem; letter-spacing:0.08em;
+    opacity:0.85;
+  }
+  .case-file .cf-label{ font-family:var(--font-mono); font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; opacity:0.55; margin-bottom:0.3rem; }
+  .case-file h2{ font-size:clamp(1.6rem,3.6vw,2.2rem); margin-bottom:0.3rem; color:var(--ink); }
+  .case-file .cf-name{ font-family:var(--font-mono); font-size:1.1rem; font-weight:700; margin-bottom:1.2rem; }
+  .cf-score-row{ display:flex; align-items:baseline; gap:0.8rem; margin-bottom:1rem; }
+  .cf-score-row .big-score{ font-family:var(--font-display); font-weight:700; font-size:2.6rem; color:var(--coral-dim); }
+  .cf-rank{ font-family:var(--font-mono); font-weight:700; font-size:1.05rem; background:var(--paper-dim); display:inline-block; padding:0.5rem 1rem; border-radius:8px; margin-bottom:1.2rem; }
+  .cf-log{ display:flex; flex-direction:column; gap:0.4rem; margin-bottom:1.2rem; }
+  .cf-log-item{ display:flex; align-items:center; gap:0.6rem; font-size:0.85rem; border-bottom:1px dashed var(--line-light); padding:0.35rem 0; }
+  .cf-log-item .tick{ width:18px; height:18px; border-radius:50%; background:var(--mint); color:var(--ink); font-size:0.65rem; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; }
+  .cf-closing{ font-size:0.9rem; opacity:0.85; border-top:1px dashed var(--line-light); padding-top:1rem; }
+  .screenshot-note{ font-family:var(--font-mono); font-size:0.78rem; opacity:0.6; margin-top:1.4rem; text-align:center; }
 
-    .case-grid { display: grid; grid-template-columns: minmax(0, 1fr) 315px; gap: 22px; align-items: start; }
-    .stations { display: grid; gap: 18px; }
-    .station {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(176,208,239,.14);
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(16,29,51,.98), rgba(9,17,31,.98));
-      box-shadow: 0 12px 38px rgba(0,0,0,.3);
-    }
-    .station.locked .station-body { filter: blur(2px); pointer-events: none; user-select: none; opacity: .27; }
-    .lock-layer { display: none; position: absolute; inset: 76px 0 0; z-index: 4; align-items: center; justify-content: center; background: rgba(3,7,13,.66); backdrop-filter: blur(3px); }
-    .station.locked .lock-layer { display: flex; }
-    .lock-badge { padding: 13px 16px; border: 1px solid rgba(255,200,92,.25); border-radius: 14px; background: #060d18; color: #dbe7f7; font-weight: 850; box-shadow: var(--shadow); }
-    .station-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 16px 20px; border-bottom: 1px solid rgba(88,228,255,.12); background: linear-gradient(90deg, rgba(88,228,255,.08), rgba(169,151,255,.035)); }
-    .station-kicker { color: var(--cyan); font-size: .72rem; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
-    .station h2 { margin: 2px 0 0; font-size: 1.25rem; }
-    .time-pill { white-space: nowrap; padding: 6px 10px; border: 1px solid rgba(255,200,92,.18); border-radius: 999px; background: rgba(0,0,0,.25); color: #e8ca83; font-size: .75rem; font-weight: 850; }
-    .station-body { padding: 20px; }
-    .story-note { margin: 0 0 16px; color: #adbbce; }
-
-    .sequence-strip { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; }
-    .sequence-strip span { min-width: 44px; padding: 8px 9px; border: 1px solid rgba(88,228,255,.18); border-radius: 9px; background: #07111f; color: white; text-align: center; font-weight: 900; }
-    .sequence-strip .mystery { color: #170d10; background: var(--red); border-color: #ff92a1; }
-    .math-box { display: inline-block; padding: 7px 10px; border: 1px solid rgba(169,151,255,.2); border-radius: 9px; background: rgba(169,151,255,.08); color: #ded7ff; font-family: "Cambria Math", Georgia, serif; font-size: 1.03rem; font-weight: 760; }
-
-    .question { margin: 12px 0; padding: 15px; border: 1px solid rgba(176,208,239,.14); border-radius: 14px; background: rgba(3,8,16,.56); }
-    .question.correct { border-color: rgba(97,232,168,.52); background: rgba(31,119,78,.13); }
-    .question.incorrect { border-color: rgba(255,99,121,.5); background: rgba(130,28,48,.13); }
-    .q-row { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-    .q-number { color: var(--cyan); font-weight: 950; }
-    .lo-tag { white-space: nowrap; padding: 4px 8px; border: 1px solid rgba(169,151,255,.22); border-radius: 999px; background: rgba(169,151,255,.12); color: #cfc4ff; font-size: .68rem; font-weight: 900; }
-    .question p { margin: 4px 0 10px; }
-    .answer-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-    .answer-line input[type="text"], .answer-line input[type="number"] { width: min(290px, 100%); }
-    .choice-list { display: grid; gap: 7px; }
-    .choice { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid rgba(176,208,239,.14); border-radius: 10px; background: #091321; }
-    .choice:hover { border-color: rgba(88,228,255,.42); }
-    .feedback { min-height: 1.35em; margin-top: 8px; font-size: .85rem; font-weight: 760; }
-    .feedback.good { color: var(--green); }
-    .feedback.bad { color: var(--red); }
-    .hint-wrap { margin-top: 10px; }
-    .hint-toggle {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      min-height: 38px;
-      padding: 7px 10px;
-      border: 1px solid rgba(var(--section-rgb, 88,228,255), .26);
-      border-radius: 999px;
-      background: rgba(var(--section-rgb, 88,228,255), .055);
-      color: var(--section-accent, var(--cyan));
-      font-size: .76rem;
-      font-weight: 900;
-      letter-spacing: .01em;
-    }
-    .hint-toggle:hover, .hint-toggle:focus-visible {
-      border-color: rgba(var(--section-rgb, 88,228,255), .55);
-      background: rgba(var(--section-rgb, 88,228,255), .11);
-      outline: none;
-    }
-    .hint-toggle[aria-expanded="true"] {
-      background: rgba(var(--section-rgb, 88,228,255), .13);
-      box-shadow: inset 0 0 18px rgba(var(--section-rgb, 88,228,255), .045);
-    }
-    .hint-panel {
-      margin-top: 8px;
-      max-width: 720px;
-      padding: 11px 13px;
-      border-left: 3px solid var(--section-accent, var(--cyan));
-      border-radius: 0 10px 10px 0;
-      background: rgba(var(--section-rgb, 88,228,255), .065);
-      color: #c7d5e7;
-      font-size: .84rem;
-      line-height: 1.5;
-    }
-    .hint-panel strong { color: var(--section-accent, var(--cyan)); }
-    .hint-panel[hidden] { display: none; }
-    .exit-pass .hint-toggle { --section-rgb: 88,228,255; --section-accent: var(--cyan); }
-    .station-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-    .station-status { color: var(--muted); font-weight: 850; }
-
-    .sidebar { position: sticky; top: 16px; display: grid; gap: 16px; }
-    .board, .suspects-card { padding: 18px; border: 1px solid rgba(176,208,239,.14); border-radius: 20px; background: rgba(10,18,32,.96); box-shadow: var(--shadow); }
-    .board h2, .suspects-card h2 { margin: 0 0 6px; }
-    .board-sub { margin: 0 0 14px; color: #8fa1ba; font-size: .86rem; }
-    .clue-list { display: grid; gap: 9px; }
-    .clue { min-height: 64px; padding: 11px; border: 1px dashed rgba(255,255,255,.22); border-radius: 12px; background: rgba(255,255,255,.035); color: #8d9bb2; font-size: .84rem; }
-    .clue.unlocked { border-style: solid; border-color: rgba(88,228,255,.48); background: rgba(88,228,255,.075); color: #dceafa; }
-    .clue b { color: var(--cyan); }
-    .suspect-mini { padding: 10px 0; border-top: 1px solid rgba(176,208,239,.1); }
-    .suspect-mini:first-of-type { border-top: 0; }
-    .suspect-name { font-weight: 900; }
-    .suspect-meta { color: #8f9eb4; font-size: .79rem; }
-
-    .finale { display: none; padding: 22px; border: 1px solid rgba(255,99,121,.3); border-radius: 20px; background: linear-gradient(135deg, rgba(64,12,29,.72), rgba(9,24,42,.96) 68%); box-shadow: var(--shadow); }
-    .finale.show { display: block; }
-    .finale h2 { margin: 0 0 8px; font-size: 1.6rem; }
-    .finale p { color: #c8d5e7; }
-    .suspect-choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0; }
-    .suspect-choice { padding: 12px; border: 1px solid rgba(255,255,255,.2); border-radius: 12px; color: white; background: rgba(255,255,255,.06); text-align: left; font-weight: 850; }
-    .suspect-choice.selected { outline: 3px solid var(--cyan); background: rgba(88,228,255,.12); }
-    .code-entry { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: end; margin-top: 14px; }
-    .code-entry label { display: block; margin-bottom: 6px; color: #a9b9cd; font-size: .8rem; font-weight: 850; }
-    .final-code-input { text-transform: uppercase; letter-spacing: .18em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 1.08rem; font-weight: 900; }
-    .outcome { display: none; margin-top: 16px; padding: 15px; border-radius: 12px; }
-    .outcome.show { display: block; }
-    .outcome.danger { border: 1px solid rgba(255,99,121,.4); background: rgba(255,99,121,.11); color: #ffd0d7; }
-    .outcome.warn { border: 1px solid rgba(255,200,92,.42); background: rgba(255,200,92,.09); color: #ffe7ae; }
-    .outcome.success { border: 1px solid rgba(97,232,168,.42); background: rgba(97,232,168,.1); color: #c8ffe5; }
-    .outcome strong { display: block; margin-bottom: 4px; font-size: 1.05rem; }
-
-    .report { display: none; margin-top: 20px; padding: 22px; border: 1px solid rgba(88,228,255,.17); border-radius: 20px; background: rgba(10,18,32,.98); box-shadow: var(--shadow); }
-    .report.show { display: block; }
-    .report-top { display: flex; gap: 20px; align-items: center; }
-    .score-ring { --score-angle: 0deg; position: relative; display: grid; place-items: center; width: 118px; height: 118px; flex: 0 0 auto; border-radius: 50%; background: conic-gradient(var(--cyan) 0deg, var(--cyan) var(--score-angle), #28344d var(--score-angle)); }
-    .score-ring::before { content: ""; position: absolute; width: 88px; height: 88px; border-radius: 50%; background: #0b1424; }
-    .score-ring span { position: relative; z-index: 1; font-size: 1.4rem; font-weight: 950; }
-    .report h2 { margin: 0; }
-    .mastery-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; margin-top: 18px; }
-    .mastery-card { padding: 11px; border: 1px solid rgba(176,208,239,.1); border-radius: 12px; background: #111e32; text-align: center; }
-    .mastery-card b { display: block; font-size: 1.22rem; }
-    .mastery-card span { color: #8e9db8; font-size: .7rem; font-weight: 800; }
-    .next-step { margin-top: 15px; padding: 12px; border: 1px solid rgba(255,200,92,.22); border-radius: 12px; background: rgba(255,200,92,.08); color: #ead9ad; }
-    .report-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-
-    .exam-pattern { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin: 12px 0 16px; }
-    .exam-stage { padding: 10px; border: 1px solid rgba(var(--section-rgb),.22); border-radius: 12px; background: rgba(var(--section-rgb),.055); text-align: center; }
-    .exam-stage svg { width: 100%; height: 86px; display: block; }
-    .exam-stage circle { fill: var(--section-accent); filter: drop-shadow(0 0 5px rgba(var(--section-rgb),.35)); }
-    .exam-stage b { display: block; color: #edf7ff; font-size: .82rem; }
-    .exam-stage span { display: block; margin-top: 2px; color: #8293aa; font-size: .7rem; font-weight: 800; }
-
-    .trap-gate {
-      display: none;
-      position: relative;
-      overflow: hidden;
-      padding: 22px;
-      border: 1px solid rgba(255,99,121,.42);
-      border-radius: 20px;
-      background: linear-gradient(140deg, rgba(56,10,22,.86), rgba(7,16,30,.98) 58%);
-      box-shadow: var(--shadow), 0 0 40px rgba(255,99,121,.07);
-    }
-    .trap-gate.show { display: block; }
-    .trap-gate::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--red); box-shadow: 0 0 24px rgba(255,99,121,.5); }
-    .trap-kicker { color: #ff8fa0; font-size: .72rem; font-weight: 950; letter-spacing: .13em; text-transform: uppercase; }
-    .trap-gate h2 { margin: 3px 0 8px; font-size: 1.6rem; }
-    .trap-story { margin: 0 0 15px; color: #c9d6e6; }
-    .fake-browser { overflow: hidden; border: 1px solid rgba(255,255,255,.16); border-radius: 14px; background: #f4f6f8; color: #16191f; box-shadow: 0 18px 45px rgba(0,0,0,.33); }
-    .fake-browser-bar { display: flex; gap: 6px; align-items: center; padding: 9px 11px; background: #dfe4e9; border-bottom: 1px solid #c8d0d8; }
-    .fake-browser-bar > span { width: 10px; height: 10px; border-radius: 50%; background: #89939c; }
-    .fake-address { min-width: 0; flex: 1; margin-left: 7px; padding: 5px 9px; border-radius: 6px; background: white; color: #8b2130; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .fake-page { display: grid; grid-template-columns: 54px minmax(0,1fr); gap: 12px; padding: 18px; }
-    .fake-alert-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; color: white; background: #d51e3c; font-size: 1.8rem; font-weight: 950; box-shadow: 0 0 0 6px rgba(213,30,60,.08); }
-    .fake-page-title { color: #b3102b; font-weight: 950; letter-spacing: .03em; }
-    .fake-page p { margin: 5px 0 12px; color: #3b424a; font-size: .88rem; }
-    .suspicious-link { width: 100%; padding: 12px 14px; border: 1px solid #8e1026; border-radius: 7px; background: linear-gradient(#e22c48,#bd1430); color: white; font-weight: 950; letter-spacing: .02em; box-shadow: 0 7px 18px rgba(181,20,48,.2); }
-    .suspicious-link:hover { transform: translateY(-1px); filter: brightness(1.05); }
-    .suspicious-link[disabled] { opacity: .55; cursor: not-allowed; transform: none; }
-    .fake-smallprint { margin-top: 7px; color: #7a2633; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .68rem; }
-    .trap-countdown { padding: 10px 14px; border-top: 1px solid #d1d7dc; background: #eef1f4; color: #515b65; text-align: right; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .78rem; }
-    .trap-countdown strong { color: #b3102b; font-size: .95rem; }
-    .trap-result { display: none; margin-top: 13px; padding: 13px 14px; border-radius: 12px; line-height: 1.45; }
-    .trap-result.show { display: block; }
-    .trap-result strong { display: block; margin-bottom: 4px; }
-    .trap-danger { border: 1px solid rgba(255,99,121,.5); background: rgba(255,99,121,.12); color: #ffd2d8; }
-    .trap-safe { border: 1px solid rgba(97,232,168,.48); background: rgba(97,232,168,.11); color: #d2ffe8; }
-    .trap-learning { border: 1px solid rgba(88,228,255,.3); background: rgba(88,228,255,.07); color: #d8f7ff; }
-
-    /* Full-screen IN-PAGE outcome screen for the suspicious-link checkpoint.
-       This is deliberately not a browser pop-up/window, so pop-up blockers do not affect it. */
-    body.trap-modal-open { overflow: hidden !important; }
-    .trap-modal-overlay {
-      position: fixed !important;
-      inset: 0 !important;
-      z-index: 2147483647 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      height: 100dvh !important;
-      margin: 0 !important;
-      padding: 20px;
-      display: none !important;
-      align-items: center !important;
-      justify-content: center !important;
-      visibility: hidden;
-      opacity: 0;
-      transform: none !important;
-      background: rgba(1,5,12,.9);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      transition: opacity .16s ease;
-      overscroll-behavior: contain;
-      touch-action: manipulation;
-    }
-    .trap-modal-overlay.show,
-    .trap-modal-overlay[data-open="true"] {
-      display: flex !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-    .trap-modal-card {
-      --modal-accent: var(--red); position: relative; width: min(720px, 100%); overflow: hidden;
-      border: 1px solid color-mix(in srgb, var(--modal-accent) 48%, transparent); border-radius: 24px;
-      padding: clamp(22px,4vw,36px); background: linear-gradient(145deg,#0a1322,#07101d 58%,#0b1627);
-      box-shadow: 0 28px 90px rgba(0,0,0,.7), 0 0 44px color-mix(in srgb, var(--modal-accent) 14%, transparent);
-      isolation: isolate;
-    }
-    .trap-modal-card.safe { --modal-accent: var(--green); }
-    .trap-modal-card.danger { --modal-accent: var(--red); }
-    .trap-modal-card::before { content:""; position:absolute; inset:0 auto 0 0; width:5px; background:var(--modal-accent); box-shadow:0 0 26px var(--modal-accent); }
-    .trap-modal-icon {
-      display:grid; place-items:center; width:68px; height:68px; margin-bottom:16px; border-radius:50%;
-      border:1px solid color-mix(in srgb, var(--modal-accent) 55%, white 8%);
-      color:var(--modal-accent); background:color-mix(in srgb, var(--modal-accent) 10%, transparent);
-      font-size:2rem; font-weight:950; box-shadow:0 0 34px color-mix(in srgb, var(--modal-accent) 12%, transparent);
-    }
-    .trap-modal-kicker { color:var(--modal-accent); font-size:.72rem; font-weight:950; letter-spacing:.14em; text-transform:uppercase; }
-    .trap-modal-card h2 { margin:5px 0 13px; font-size:clamp(1.55rem,4vw,2.3rem); line-height:1.03; }
-    .trap-modal-copy { color:#d7e3ef; font-size:clamp(.92rem,1.7vw,1.04rem); line-height:1.62; }
-    .trap-modal-copy strong { color:#fff; }
-    .trap-modal-note { margin-top:16px; padding:13px 14px; border:1px solid rgba(88,228,255,.22); border-radius:12px; background:rgba(88,228,255,.065); color:#d7f7ff; line-height:1.55; }
-    .trap-modal-note strong { display:block; margin-bottom:3px; color:var(--cyan); }
-    .trap-modal-footer { display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; margin-top:22px; }
-    .trap-modal-wait { color:#93a5bb; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:.78rem; font-weight:800; }
-    .trap-continue {
-      min-width:170px; padding:11px 16px; border:1px solid color-mix(in srgb, var(--modal-accent) 45%, transparent); border-radius:999px;
-      background:linear-gradient(135deg,color-mix(in srgb,var(--modal-accent) 30%,#0c1728),#111d31); color:white; font-weight:950;
-    }
-    .trap-continue:disabled { opacity:.48; cursor:not-allowed; }
-    .trap-continue:not(:disabled):hover { transform:translateY(-1px); filter:brightness(1.08); }
-    .trap-modal-card > :not(.trap-modal-confetti) { position: relative; z-index: 2; }
-    .trap-modal-confetti { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
-    .confetti-piece { position:absolute; top:-18px; width:8px; height:14px; border-radius:2px; opacity:.92; animation:confettiFall var(--fall,2.8s) linear var(--delay,0s) forwards; }
-    @keyframes confettiFall {
-      0% { transform:translate3d(0,-10px,0) rotate(0deg); opacity:0; }
-      10% { opacity:1; }
-      100% { transform:translate3d(var(--drift,0px),760px,0) rotate(var(--spin,600deg)); opacity:.15; }
-    }
-
-    @media (max-width: 650px) {
-      .exam-pattern { grid-template-columns: 1fr; }
-      .fake-page { grid-template-columns: 1fr; }
-    }
-
-    .exit-pass {
-      display: none;
-      position: relative;
-      overflow: hidden;
-      padding: 22px;
-      border: 1px solid rgba(97,232,168,.34);
-      border-radius: 20px;
-      background: linear-gradient(135deg, rgba(10,52,39,.72), rgba(7,19,33,.98) 64%);
-      box-shadow: var(--shadow);
-    }
-    .exit-pass.show { display: block; }
-    .exit-pass::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--green); box-shadow: 0 0 22px rgba(97,232,168,.45); }
-    .exit-kicker { color: var(--green); font-size: .72rem; font-weight: 950; letter-spacing: .13em; text-transform: uppercase; }
-    .exit-pass h2 { margin: 3px 0 8px; font-size: 1.55rem; }
-    .exit-story { color: #c4d6df; margin: 0 0 16px; }
-    .exit-rule-card { display: inline-flex; gap: 12px; align-items: center; margin: 2px 0 18px; padding: 10px 13px; border: 1px solid rgba(97,232,168,.25); border-radius: 12px; background: rgba(97,232,168,.07); }
-    .exit-rule-label { color: #8fbda9; font-size: .72rem; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
-    .exit-rule { color: #d7ffeb; font-family: "Cambria Math", Georgia, serif; font-size: 1.18rem; font-weight: 850; }
-    .exit-prompt { margin: 14px 0 8px; color: #e8f4f8; }
-    .exit-token-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
-    .exit-option { padding: 14px; border: 1px solid rgba(176,208,239,.18); border-radius: 12px; color: #dce9f4; background: rgba(3,8,16,.55); font-weight: 900; text-align: left; }
-    .exit-option:hover { border-color: rgba(97,232,168,.5); }
-    .exit-option.selected { outline: 3px solid rgba(97,232,168,.55); border-color: var(--green); background: rgba(97,232,168,.12); color: #e5fff1; }
-    .exit-learning { display: none; margin-top: 14px; padding: 13px; border: 1px solid rgba(88,228,255,.25); border-radius: 12px; background: rgba(88,228,255,.07); color: #d7f7ff; }
-    .exit-learning.show { display: block; }
-    .exit-pass.complete { border-color: rgba(97,232,168,.7); box-shadow: var(--shadow), 0 0 35px rgba(97,232,168,.09); }
-    .exit-pass.complete .exit-option, .exit-pass.complete #exitPosition, .exit-pass.complete .exit-reason-list { opacity: .78; }
-
-
-
-    /* Final avatar reveal */
-    .avatar-reveal {
-      --avatar-accent: var(--cyan);
-      --avatar-rgb: 88,228,255;
-      display: none;
-      position: relative;
-      overflow: hidden;
-      margin-top: 20px;
-      padding: 24px;
-      border: 1px solid rgba(var(--avatar-rgb), .38);
-      border-radius: 24px;
-      background:
-        radial-gradient(circle at 12% 8%, rgba(var(--avatar-rgb), .14), transparent 30%),
-        linear-gradient(145deg, rgba(8,18,34,.99), rgba(4,9,18,.99));
-      box-shadow: var(--shadow), 0 0 42px rgba(var(--avatar-rgb), .08);
-    }
-    .avatar-reveal.show { display: block; animation: avatarRise .55s ease both; }
-    .avatar-reveal::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--avatar-accent); box-shadow: 0 0 24px rgba(var(--avatar-rgb), .6); }
-    .avatar-reveal::after { content: ""; position: absolute; width: 360px; height: 360px; right: -165px; top: -180px; border: 1px solid rgba(var(--avatar-rgb), .2); border-radius: 50%; box-shadow: 0 0 0 44px rgba(var(--avatar-rgb), .025), 0 0 0 88px rgba(var(--avatar-rgb), .02); pointer-events: none; }
-    @keyframes avatarRise { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: none; } }
-    .avatar-kicker { color: var(--avatar-accent); font-size: .72rem; font-weight: 950; letter-spacing: .14em; text-transform: uppercase; }
-    .avatar-title-row { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; margin-bottom: 16px; position: relative; z-index: 1; }
-    .avatar-title-row h2 { margin: 3px 0 4px; font-size: clamp(1.65rem, 3vw, 2.35rem); }
-    .avatar-title-row p { margin: 0; color: #aebed3; max-width: 760px; }
-    .avatar-level-pill { white-space: nowrap; padding: 7px 11px; border: 1px solid rgba(var(--avatar-rgb), .38); border-radius: 999px; color: var(--avatar-accent); background: rgba(var(--avatar-rgb), .08); font-size: .72rem; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
-    .avatar-layout { display: grid; grid-template-columns: minmax(250px, .78fr) minmax(0, 1.42fr); gap: 20px; align-items: stretch; position: relative; z-index: 1; }
-    .avatar-visual-card { position: relative; min-height: 410px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; border: 1px solid rgba(var(--avatar-rgb), .34); border-radius: 20px; background: linear-gradient(180deg, rgba(var(--avatar-rgb), .09), rgba(1,5,12,.9)); box-shadow: inset 0 0 46px rgba(var(--avatar-rgb), .055); }
-    .avatar-visual-card::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px); background-size: 28px 28px; mask-image: linear-gradient(to bottom, black, transparent 82%); pointer-events: none; }
-    .avatar-graphic { position: absolute; inset: 0 0 94px; display: grid; place-items: center; padding: 10px 16px 0; color: var(--avatar-accent); }
-    .avatar-graphic svg { width: min(100%, 330px); height: 100%; max-height: 315px; overflow: visible; filter: drop-shadow(0 18px 26px rgba(0,0,0,.42)); }
-    .avatar-nameplate { position: relative; z-index: 2; padding: 14px 16px 16px; border-top: 1px solid rgba(var(--avatar-rgb), .25); background: linear-gradient(180deg, rgba(5,11,20,.88), rgba(4,8,15,.98)); text-align: center; }
-    .avatar-name { color: var(--avatar-accent); font-size: 1.45rem; font-weight: 980; letter-spacing: .02em; text-transform: uppercase; }
-    .avatar-codename { margin-top: 3px; color: #dce8f6; font-size: .87rem; font-weight: 850; }
-    .avatar-details { display: grid; gap: 14px; align-content: start; }
-    .avatar-message { padding: 15px 16px; border: 1px solid rgba(var(--avatar-rgb), .24); border-radius: 14px; background: rgba(var(--avatar-rgb), .065); color: #e6f2fb; font-weight: 780; }
-    .avatar-message strong { color: var(--avatar-accent); }
-    .avatar-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-    .avatar-stat { padding: 11px; border: 1px solid rgba(176,208,239,.12); border-radius: 12px; background: #0a1525; text-align: center; }
-    .avatar-stat b { display: block; color: #f2f7ff; font-size: 1.18rem; }
-    .avatar-stat span { color: #8292aa; font-size: .68rem; font-weight: 850; letter-spacing: .04em; text-transform: uppercase; }
-    .badge-showcase-head { display: flex; justify-content: space-between; gap: 10px; align-items: end; margin-top: 2px; }
-    .badge-showcase-head h3 { margin: 0; font-size: 1rem; }
-    .badge-showcase-head span { color: #8393aa; font-size: .72rem; }
-    .avatar-badge-showcase { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
-    .showcase-badge { display: grid; grid-template-columns: 42px 1fr; gap: 8px; align-items: center; min-height: 62px; padding: 8px; border: 1px solid rgba(176,208,239,.12); border-radius: 13px; background: rgba(255,255,255,.025); opacity: .42; filter: grayscale(.9); }
-    .showcase-badge.earned { opacity: 1; filter: none; border-color: rgba(255,200,92,.34); background: linear-gradient(110deg, rgba(255,200,92,.08), rgba(var(--avatar-rgb), .045)); }
-    .showcase-badge .badge-emblem { width: 38px; height: 38px; }
-    .showcase-badge .badge-emblem svg { width: 24px; height: 24px; }
-    .showcase-badge .badge-name { font-size: .72rem; }
-    .showcase-badge .badge-status { font-size: .58rem; }
-    .showcase-badge.earned .badge-status { color: var(--green); }
-    .avatar-criteria { padding: 12px 13px; border-left: 3px solid var(--avatar-accent); border-radius: 0 11px 11px 0; background: rgba(255,255,255,.035); color: #98a8bd; font-size: .78rem; }
-    .avatar-criteria b { color: #eaf4ff; }
-
-    .avatar-novice { --avatar-accent: #a9b5c6; --avatar-rgb: 169,181,198; }
-    .avatar-junior { --avatar-accent: #ffb454; --avatar-rgb: 255,180,84; }
-    .avatar-elite { --avatar-accent: #58e4ff; --avatar-rgb: 88,228,255; }
-    .avatar-speedster { --avatar-accent: #b48cff; --avatar-rgb: 180,140,255; }
-    .avatar-legendary { --avatar-accent: #ffd35e; --avatar-rgb: 255,211,94; }
-
-    @media (max-width: 900px) {
-      .avatar-layout { grid-template-columns: 1fr; }
-      .avatar-visual-card { min-height: 380px; }
-    }
-    @media (max-width: 650px) {
-      .avatar-reveal { padding: 18px 15px; }
-      .avatar-title-row { flex-direction: column; }
-      .avatar-level-pill { white-space: normal; }
-      .avatar-stats { grid-template-columns: 1fr 1fr; }
-      .avatar-badge-showcase { grid-template-columns: 1fr 1fr; }
-      .avatar-visual-card { min-height: 350px; }
-      .avatar-graphic { inset: 0 0 92px; }
-    }
-
-    .toast { position: fixed; right: 120px; bottom: 18px; z-index: 100; max-width: 360px; padding: 12px 15px; border: 1px solid rgba(88,228,255,.25); border-radius: 12px; background: #06101d; color: white; box-shadow: var(--shadow); transform: translateY(120px); opacity: 0; transition: .25s ease; font-weight: 760; }
-    .toast.show { transform: translateY(0); opacity: 1; }
-    .print-only { display: none; }
-
-    @media (max-width: 1280px) {
-      body { padding-bottom: 128px; }
-      .mission-rail {
-        left: 50%;
-        right: auto;
-        top: auto;
-        bottom: 8px;
-        width: min(760px, calc(100% - 16px));
-        transform: translateX(-50%);
-        grid-template-columns: auto 1px auto;
-        align-items: center;
-        padding: 8px 10px;
-      }
-      .rail-title { display: none; }
-      .code-mini { grid-template-columns: repeat(8, 32px); }
-      .rail-divider { width: 1px; height: 38px; }
-      .badge-grid { grid-template-columns: repeat(8, 32px); }
-      .badge-medal::before { right: auto; left: 50%; top: auto; bottom: 43px; transform: translateX(-50%); }
-      .toast { right: 18px; bottom: 118px; }
-    }
-    @media (max-width: 900px) {
-      .header-grid, .identity-card, .case-grid { grid-template-columns: 1fr; }
-      .timer-card { justify-self: stretch; min-width: 0; }
-      .sidebar { position: static; }
-      .mastery-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    @media (max-width: 650px) {
-      body { padding-bottom: 172px; }
-      .case-header { padding: 22px 14px 74px; }
-      .main-shell { padding: 0 12px; }
-      .station-head { align-items: flex-start; }
-      .time-pill { font-size: .68rem; }
-      .suspect-choice-grid, .code-entry, .exit-token-grid { grid-template-columns: 1fr; }
-      .report-top { flex-direction: column; align-items: flex-start; }
-      .mission-rail { grid-template-columns: 1fr; gap: 6px; }
-      .rail-divider { width: 100%; height: 1px; }
-      .code-mini, .badge-grid { grid-template-columns: repeat(8, 1fr); }
-      .code-slot { height: 29px; }
-      .badge-medal { width: 30px; height: 30px; }
-      .toast { bottom: 162px; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      * { scroll-behavior: auto !important; }
-      .case-header::before { animation: none; }
-      .confetti-piece { animation: none !important; display: none !important; }
-    }
-    @media print {
-      body { color: black; background: white; padding: 0; }
-      .case-header, .identity-card, .objectives, .stations, .sidebar, .finale, .trap-gate, .exit-pass, .mission-rail, .toast, .report-actions { display: none !important; }
-      .main-shell { max-width: none; margin: 0; padding: 0; }
-      .avatar-reveal.show { display: block !important; color: black; background: white; border: 1px solid #bbb; box-shadow: none; break-inside: avoid; }
-      .avatar-reveal .avatar-message, .avatar-reveal .avatar-stat, .avatar-reveal .showcase-badge, .avatar-reveal .avatar-criteria { color: black; background: white; }
-      .avatar-reveal .avatar-nameplate { background: white; }
-      .avatar-reveal .avatar-codename, .avatar-reveal .badge-showcase-head span, .avatar-reveal .avatar-stat span { color: #444; }
-      .report { display: block !important; border: 0; box-shadow: none; color: black; background: white; }
-      .print-only { display: block; }
-      .mastery-card { color: black; background: #f0f3f7; }
-      .next-step { color: black; background: #fff7dd; }
-      .score-ring::before { background: white; }
-    }
-
-
-    /* Revision: automatic persistent timer, prominent badges and colour-coded nodes */
-    .timer-actions { display: none !important; }
-    .timer-note { margin-top: 7px; color: #98a9c0; font-size: .78rem; font-weight: 700; line-height: 1.35; }
-
-    .mission-rail {
-      width: 258px;
-      gap: 13px;
-      padding: 14px;
-      border: 1px solid rgba(88,228,255,.38);
-      border-radius: 22px;
-      background: linear-gradient(165deg, rgba(8,19,35,.985), rgba(3,8,16,.985));
-      box-shadow: 0 24px 70px rgba(0,0,0,.58), 0 0 0 1px rgba(255,255,255,.025), 0 0 34px rgba(88,228,255,.09);
-    }
-    .mission-rail::before {
-      content: "MISSION HUD";
-      display: block;
-      margin: -2px 0 2px;
-      color: var(--cyan);
-      font-size: .68rem;
-      font-weight: 950;
-      letter-spacing: .16em;
-      text-align: center;
-    }
-    .rail-title { font-size: .68rem; color: #b3c3d8; }
-    .code-mini { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .code-slot { height: 34px; font-size: .9rem; }
-    .badge-panel-head { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 8px; }
-    .badge-count { padding: 3px 7px; border: 1px solid rgba(255,200,92,.28); border-radius: 999px; color: #ffe2a1; background: rgba(255,200,92,.08); font-size: .68rem; font-weight: 900; }
-    .badge-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
-    .badge-card {
-      position: relative;
-      display: grid;
-      grid-template-columns: 46px minmax(0, 1fr);
-      gap: 9px;
-      align-items: center;
-      min-height: 54px;
-      padding: 6px 8px;
-      border: 1px solid rgba(176,208,239,.13);
-      border-radius: 13px;
-      background: rgba(255,255,255,.025);
-      color: #6f7e95;
-      opacity: .72;
-      filter: saturate(.35);
-      transition: transform .18s ease, border-color .18s ease, background .18s ease, opacity .18s ease;
-    }
-    .badge-card:hover, .badge-card:focus { transform: translateX(-2px); border-color: rgba(88,228,255,.36); outline: none; }
-    .badge-card.earned { color: #eef8ff; opacity: 1; filter: none; border-color: rgba(255,200,92,.48); background: linear-gradient(100deg, rgba(255,200,92,.11), rgba(88,228,255,.055)); box-shadow: inset 0 0 18px rgba(255,200,92,.045); }
-    .badge-card.earned::after { content: "✓"; position: absolute; right: 8px; top: 6px; color: var(--green); font-size: .8rem; font-weight: 950; }
-    .badge-emblem {
-      display: grid;
-      place-items: center;
-      width: 42px;
-      height: 42px;
-      border: 1px solid currentColor;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 28%, rgba(255,255,255,.19), transparent 32%), rgba(255,255,255,.04);
-      box-shadow: inset 0 0 0 3px rgba(255,255,255,.025);
-    }
-    .badge-emblem svg { width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
-    .badge-emblem svg circle { fill: currentColor; stroke: none; }
-    .badge-art { color: #ff78d9; }
-    .badge-mpr { color: #ffb85e; }
-    .badge-math { color: #66e8ff; }
-    .badge-sports { color: #68e8ac; }
-    .badge-rapid { color: #b39cff; }
-    .badge-deadline { color: #ffd36e; }
-    .badge-name { color: inherit; font-size: .79rem; font-weight: 930; line-height: 1.1; }
-    .badge-status { margin-top: 3px; color: #7f8da4; font-size: .64rem; font-weight: 780; line-height: 1.12; }
-    .badge-card.earned .badge-status { color: var(--green); letter-spacing: .08em; font-weight: 950; }
-
-    .station { --section-accent: var(--cyan); --section-rgb: 88,228,255; }
-    .station[data-station="1"] { --section-accent: #ff72d5; --section-rgb: 255,114,213; }
-    .station[data-station="2"] { --section-accent: #ffb454; --section-rgb: 255,180,84; }
-    .station[data-station="3"] { --section-accent: #58e4ff; --section-rgb: 88,228,255; }
-    .station[data-station="4"] { --section-accent: #61e8a8; --section-rgb: 97,232,168; }
-    .station::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--section-accent); box-shadow: 0 0 20px rgba(var(--section-rgb),.45); z-index: 3; }
-    .station .station-head { border-bottom-color: rgba(var(--section-rgb),.28); background: linear-gradient(90deg, rgba(var(--section-rgb),.16), rgba(var(--section-rgb),.025)); }
-    .station .station-kicker, .station .q-number { color: var(--section-accent); }
-    .station .time-pill { color: var(--section-accent); border-color: rgba(var(--section-rgb),.28); }
-    .station .question { border-left: 4px solid rgba(var(--section-rgb),.72); background: linear-gradient(100deg, rgba(var(--section-rgb),.07), rgba(3,8,16,.56) 32%); }
-    .station .question:nth-of-type(2) { background: linear-gradient(100deg, rgba(var(--section-rgb),.035), rgba(3,8,16,.62) 35%); }
-    .station .lo-tag { color: var(--section-accent); border-color: rgba(var(--section-rgb),.32); background: rgba(var(--section-rgb),.09); }
-    .station .answer-line input:focus { border-color: var(--section-accent); box-shadow: 0 0 0 3px rgba(var(--section-rgb),.11); }
-    .station [data-check-station] { background: linear-gradient(135deg, rgba(var(--section-rgb),.28), rgba(var(--section-rgb),.11)); border-color: rgba(var(--section-rgb),.4); }
-
-    @media (max-width: 1500px) {
-      body { padding-bottom: 152px; }
-      .mission-rail {
-        left: 50%; right: auto; top: auto; bottom: 8px;
-        width: min(1120px, calc(100% - 16px));
-        transform: translateX(-50%);
-        grid-template-columns: 224px 1px minmax(0, 1fr);
-        align-items: center;
-        padding: 9px 12px;
-      }
-      .mission-rail::before { display: none; }
-      .code-mini { grid-template-columns: repeat(8, 1fr); }
-      .rail-divider { width: 1px; height: 72px; }
-      .badge-panel-head { margin-bottom: 5px; }
-      .badge-grid { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: thin; }
-      .badge-card { flex: 0 0 154px; min-height: 48px; grid-template-columns: 38px 1fr; padding: 5px 7px; }
-      .badge-emblem { width: 35px; height: 35px; }
-      .badge-emblem svg { width: 23px; height: 23px; }
-      .badge-name { font-size: .71rem; }
-      .badge-status { font-size: .58rem; }
-      .toast { right: 18px; bottom: 142px; }
-    }
-    @media (max-width: 700px) {
-      body { padding-bottom: 190px; }
-      .mission-rail { grid-template-columns: 1fr; gap: 6px; }
-      .rail-divider { width: 100%; height: 1px; }
-      .badge-panel-head { display: none; }
-      .badge-grid { width: 100%; }
-      .badge-card { flex-basis: 138px; }
-      .toast { bottom: 180px; }
-    }
-
-
-    @media (min-width: 1501px) {
-      .header-inner, .main-shell { transform: translateX(-90px); }
-    }
-    @media (max-width: 1500px) and (min-width: 701px) {
-      .badge-card { flex-basis: 132px; }
-    }
-    @media (max-width: 700px) {
-      .mission-rail > div, .badge-panel { min-width: 0; width: 100%; }
-      .code-mini { width: 100%; min-width: 0; }
-      .badge-grid { min-width: 0; }
-    }
-
-  </style>
+  @media (max-width:640px){
+    .case-stamp{ font-size:1rem; padding:0.3rem 1.4rem; right:-1rem; top:1.2rem; }
+    .hud-stages{ gap:0.25rem; }
+    .hud-name{ display:none; }
+  }
+</style>
 </head>
 <body>
-  <header class="case-header">
-    <div class="header-inner">
-      <div class="eyebrow">Critical school network incident</div>
-      <h1>PLD Lockdown: Code Black</h1>
-      <p class="subtitle">Every Personal Learning Device in the school has been remotely locked. A wipe countdown is active. Recover your unique eight-character override code, identify the compromised account behind the attack, and stop the wipe before time runs out.</p>
-      <div class="header-grid">
-        <div class="briefing">
-          <strong>Incident brief:</strong> At 8:18 a.m., a lock command spread through the school device-management system. Four school devices were active near the network at the time. Each verified sequence reveals one character of the override code and one piece of forensic evidence.
-          <span class="simulation-note">Fictional classroom simulation: no real devices, accounts or data are affected.</span>
-        </div>
-        <div class="timer-card" id="timerCard" aria-label="20 minute wipe countdown">
-          <div class="timer-label">PLD wipe countdown</div>
-          <div id="timer">20:00</div>
-          <div class="timer-note" id="timerStateText">Countdown starts automatically. Reloads preserve this attempt. After completing the mission, you can start a fresh investigation immediately.</div>
-        </div>
-      </div>
+
+<div class="top-hud">
+  <span class="hud-name" id="hudName">Detective</span>
+  <div class="hud-stages" id="hudStages"></div>
+  <span class="hud-timer" id="hudTimer">18:00</span>
+  <button class="hud-reset" id="hudReset">⟲ New case</button>
+</div>
+
+<!-- INTRO -->
+<div class="screen active" id="screen-intro">
+  <div class="screen-inner">
+    <div class="badge-icon">🕵️</div>
+    <div class="eyebrow">Case File #0117</div>
+    <h1>The Founder's Day Mystery</h1>
+    <p class="lede">The Founder's Day Cup has vanished from its display case, just two days before the ceremony. The only clues left behind are strange number sequences. The Principal has called in a junior detective to crack the case: <strong>you</strong>.</p>
+    <div class="name-input-row">
+      <input type="text" id="playerName" placeholder="Enter your detective name" maxlength="24">
+      <button class="big-btn" id="startBtn">Begin Investigation →</button>
     </div>
-  </header>
-
-  <aside class="mission-rail" aria-label="Override code and badges">
-    <div>
-      <div class="rail-title">Override code</div>
-      <div class="code-mini" id="codeMini">
-        <div class="code-slot" id="slot-q1">?</div><div class="code-slot" id="slot-q2">?</div>
-        <div class="code-slot" id="slot-q3">?</div><div class="code-slot" id="slot-q4">?</div>
-        <div class="code-slot" id="slot-q5">?</div><div class="code-slot" id="slot-q6">?</div>
-        <div class="code-slot" id="slot-q7">?</div><div class="code-slot" id="slot-q8">?</div>
-      </div>
+    <div class="rules-list">
+      <div>🔍 <span>Crack every clue by solving the number pattern behind it.</span></div>
+      <div>⏱️ <span>You have 18 minutes before the ceremony starts. The clock is ticking.</span></div>
+      <div>💭 <span>Some clues need extra sharp thinking — watch for the flag.</span></div>
+      <div>🎯 <span>One shot per clue — read carefully before you answer.</span></div>
     </div>
-    <div class="rail-divider"></div>
-    <div class="badge-panel">
-      <div class="badge-panel-head">
-        <div class="rail-title">Mission badges</div>
-        <div class="badge-count" id="badgeCount">0 / 6</div>
+  </div>
+</div>
+
+<!-- STAGE 1 -->
+<div class="screen" id="screen-stage1">
+  <div class="screen-inner">
+    <div class="stage-label">Clue 1 of 5</div>
+    <h2 class="stage-title">The Empty Display Case</h2>
+    <div class="flavor-text">Beside the empty case, you find a torn note with numbers scrawled in a hurry. Whoever took the Cup wants to be followed — but only by someone who can read the pattern.</div>
+    <div class="qgrid">
+
+      <div class="qblock" id="block-q1">
+        <div class="qtag"><span>🔢 Clue 1a</span></div>
+        <p class="qprompt">7, 12, 17, 22, ... What is the common difference?</p>
+        <div class="mcq-options">
+          <button class="opt-btn" data-qid="q1" data-correct="false">7</button>
+          <button class="opt-btn" data-qid="q1" data-correct="true">5</button>
+          <button class="opt-btn" data-qid="q1" data-correct="false">12</button>
+          <button class="opt-btn" data-qid="q1" data-correct="false">22</button>
+        </div>
+        <div class="feedback" id="fb-q1"></div>
       </div>
-      <div class="badge-grid">
-        <div class="badge-card" id="badge-art" tabindex="0">
-          <div class="badge-emblem badge-art"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 7a17 17 0 1 0 0 34h3.5a4.5 4.5 0 0 0 0-9H25a3 3 0 0 1 0-6h5a11 11 0 0 0 0-22h-6Z"/><circle cx="15" cy="20" r="2.4"/><circle cx="21" cy="14" r="2.4"/><circle cx="30" cy="14" r="2.4"/><circle cx="35" cy="21" r="2.4"/></svg></div>
-          <div><div class="badge-name">Art Cipher</div><div class="badge-status">Clear Art Room</div></div>
+
+      <div class="qblock" id="block-q2">
+        <div class="qtag"><span>🔢 Clue 1b</span></div>
+        <p class="qprompt">50, 44, 38, 32, ... What is the common difference?</p>
+        <div class="mcq-options">
+          <button class="opt-btn" data-qid="q2" data-correct="true">−6</button>
+          <button class="opt-btn" data-qid="q2" data-correct="false">6</button>
+          <button class="opt-btn" data-qid="q2" data-correct="false">−8</button>
+          <button class="opt-btn" data-qid="q2" data-correct="false">44</button>
         </div>
-        <div class="badge-card" id="badge-mpr" tabindex="0">
-          <div class="badge-emblem badge-mpr"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 35h26M14 35V18h20v17M18 18l6-8 6 8M20 24h8M24 24v8"/><circle cx="24" cy="33" r="2"/></svg></div>
-          <div><div class="badge-name">Stage Signal</div><div class="badge-status">Clear Multipurpose Room</div></div>
-        </div>
-        <div class="badge-card" id="badge-math" tabindex="0">
-          <div class="badge-emblem badge-math"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M11 10h26v28H11zM16 16h16M16 23h5M27 23h5M16 30h5M27 30h5"/><path d="m19 21-4 4 4 4M29 21l4 4-4 4"/></svg></div>
-          <div><div class="badge-name">Math Mainframe</div><div class="badge-status">Clear Math Studio</div></div>
-        </div>
-        <div class="badge-card" id="badge-sports" tabindex="0">
-          <div class="badge-emblem badge-sports"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 7 38 13v10c0 9-5.8 15.1-14 19-8.2-3.9-14-10-14-19V13z"/><path d="m27 13-9 13h7l-3 10 9-14h-7z"/></svg></div>
-          <div><div class="badge-name">Hall Defender</div><div class="badge-status">Clear Sports Hall</div></div>
-        </div>
-        <div class="badge-card" id="badge-rapid" tabindex="0">
-          <div class="badge-emblem badge-rapid"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8c6 2 10 6 12 12L27 33l-12-12z"/><path d="m18 24-7 2-3 7 9-1M24 30l-2 7 7 3 2-9M15 35l-5 5M21 37l-3 4"/><circle cx="30" cy="18" r="3"/></svg></div>
-          <div><div class="badge-name">Rapid Responder</div><div class="badge-status">Finish in under 10 min</div></div>
-        </div>
-        <div class="badge-card" id="badge-deadline" tabindex="0">
-          <div class="badge-emblem badge-deadline"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="25" r="15"/><path d="M24 17v9l6 4M18 7h12M24 7v3"/><path d="m15 35 5 5 13-13"/></svg></div>
-          <div><div class="badge-name">Deadline Defender</div><div class="badge-status">Finish within 20 min</div></div>
-        </div>
+        <div class="feedback" id="fb-q2"></div>
       </div>
+
+      <div class="qblock thinking" id="block-q3">
+        <div class="qtag"><span class="think-flag">💭 THINK</span>Clue 1c</div>
+        <p class="qprompt">One of these locker codes is a fake — it doesn't have a constant difference. Which one?</p>
+        <div class="mcq-options">
+          <button class="opt-btn" data-qid="q3" data-correct="false">4, 8, 12, 16</button>
+          <button class="opt-btn" data-qid="q3" data-correct="false">3, 6, 9, 12</button>
+          <button class="opt-btn" data-qid="q3" data-correct="true">2, 4, 8, 16</button>
+          <button class="opt-btn" data-qid="q3" data-correct="false">5, 10, 15, 20</button>
+        </div>
+        <div class="feedback" id="fb-q3"></div>
+      </div>
+
+      <div class="qblock thinking" id="block-q4">
+        <div class="qtag"><span class="think-flag">💭 THINK</span>Clue 1d</div>
+        <p class="qprompt">The note reads: <strong>4, 13, 23, 31, 40</strong>. The thief smudged one number by mistake. If the difference should be constant, what should the 3rd term actually be?</p>
+        <div class="numeric-row">
+          <input type="text" inputmode="numeric" id="q4-ans" placeholder="answer">
+          <button class="check-btn" data-check="numeric" data-qid="q4" data-ans="22">Check</button>
+        </div>
+        <div class="feedback" id="fb-q4"></div>
+      </div>
+
     </div>
-  </aside>
+    <div class="continue-wrap"><button class="big-btn" id="continue1" disabled>Continue Investigation →</button><div class="hint-note">Answer every clue above to unlock the next scene.</div></div>
+  </div>
+</div>
 
-  <main class="main-shell">
-    <section class="identity-card" aria-label="student details and progress">
-      <div class="field">
-        <label for="studentName">Cyber investigator</label>
-        <input id="studentName" type="text" placeholder="Enter your name">
-      </div>
-      <div class="field">
-        <label for="studentClass">Class / team</label>
-        <input id="studentClass" type="text" placeholder="e.g. 1 Respect">
-      </div>
-      <div class="progress-wrap">
-        <div class="progress-meta"><span>Forensic nodes cleared</span><span id="progressText">0 of 4 venues</span></div>
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-      </div>
-    </section>
+<!-- STAGE 2 -->
+<div class="screen" id="screen-stage2">
+  <div class="screen-inner">
+    <div class="stage-label">Clue 2 of 5</div>
+    <h2 class="stage-title">Behind the Gym Lockers</h2>
+    <div class="flavor-text">The trail leads to the gym. A row of lockers has numbers spray-painted across them, forming another pattern. You'll need the general formula this time — there's no way to check every locker by hand.</div>
+    <div class="qgrid">
 
-    <section class="objectives" aria-label="lesson objectives">
-      <span class="objective-chip">LO1 Recognise number patterns</span>
-      <span class="objective-chip">LO2 Find a general term</span>
-      <span class="objective-chip">LO3 Simplify to the nth term</span>
-      <span class="objective-chip">LO4 Calculate beyond the sequence</span>
-      <span class="objective-chip">LO5 Apply and explain nth terms</span>
-    </section>
-
-    <div class="case-grid">
-      <div class="stations">
-        <section class="station" id="station1" data-station="1">
-          <div class="station-head">
-            <div><div class="station-kicker">Forensic node 1</div><h2>Art Room access point</h2></div>
-            <div class="time-pill">Suggested: 5 min</div>
-          </div>
-          <div class="station-body">
-            <p class="story-note">The Art Room access point stored two fragments of the intrusion log. Verify both patterns to unlock code characters 1 and 2.</p>
-            <div class="question" data-q="q1">
-              <div class="q-row"><div><span class="q-number">Q1.</span> Find the next term.</div><span class="lo-tag">LO1</span></div>
-              <div class="sequence-strip" aria-label="7, 12, 17, 22, unknown"><span>7</span><span>12</span><span>17</span><span>22</span><span class="mystery">?</span></div>
-              <div class="answer-line"><input type="number" id="q1" aria-label="answer to question 1"></div>
-              <div class="hint-wrap">
-                <button type="button" class="hint-toggle" data-hint-q="q1" aria-controls="hint-q1" aria-expanded="false">💡 Need a hint?</button>
-                <div class="hint-panel" id="hint-q1" hidden></div>
-              </div>
-              <div class="feedback" id="fb-q1"></div>
-            </div>
-            <div class="question" data-q="q2">
-              <div class="q-row"><div><span class="q-number">Q2.</span> Write the nth term of <span class="math-box">8, 13, 18, 23, ...</span></div><span class="lo-tag">LO2</span></div>
-              <div class="answer-line"><span>T<sub>n</sub> =</span><input type="text" id="q2" placeholder="expression in n" aria-label="answer to question 2"></div>
-              <div class="hint-wrap">
-                <button type="button" class="hint-toggle" data-hint-q="q2" aria-controls="hint-q2" aria-expanded="false">💡 Need a hint?</button>
-                <div class="hint-panel" id="hint-q2" hidden></div>
-              </div>
-              <div class="feedback" id="fb-q2"></div>
-            </div>
-            <div class="station-actions"><button class="btn btn-dark" data-check-station="1">Verify Art Room node</button><span class="station-status" id="status1">Unverified</span></div>
-          </div>
-          <div class="lock-layer"><div class="lock-badge">Clear the previous venue first</div></div>
-        </section>
-
-        <section class="station locked" id="station2" data-station="2">
-          <div class="station-head">
-            <div><div class="station-kicker">Forensic node 2</div><h2>Multipurpose Room terminal</h2></div>
-            <div class="time-pill">Suggested: 5 min</div>
-          </div>
-          <div class="station-body">
-            <p class="story-note">The stage-control terminal recorded a decreasing signal pattern and a second decreasing arithmetic sequence.</p>
-            <div class="question" data-q="q3">
-              <div class="q-row"><div><span class="q-number">Q3.</span> Find the next term.</div><span class="lo-tag">LO1</span></div>
-              <div class="sequence-strip" aria-label="41, 35, 29, 23, unknown"><span>41</span><span>35</span><span>29</span><span>23</span><span class="mystery">?</span></div>
-              <div class="answer-line"><input type="number" id="q3" aria-label="answer to question 3"></div>
-              <div class="hint-wrap">
-                <button type="button" class="hint-toggle" data-hint-q="q3" aria-controls="hint-q3" aria-expanded="false">💡 Need a hint?</button>
-                <div class="hint-panel" id="hint-q3" hidden></div>
-              </div>
-              <div class="feedback" id="fb-q3"></div>
-            </div>
-            <div class="question" data-q="q4">
-              <div class="q-row"><div><span class="q-number">Q4.</span> Write the nth term of <span class="math-box">18, 14, 10, 6, ...</span></div><span class="lo-tag">LO2</span></div>
-              <div class="answer-line"><span>T<sub>n</sub> =</span><input type="text" id="q4" placeholder="expression in n" aria-label="answer to question 4"></div>
-              <div class="hint-wrap">
-                <button type="button" class="hint-toggle" data-hint-q="q4" aria-controls="hint-q4" aria-expanded="false">💡 Need a hint?</button>
-                <div class="hint-panel" id="hint-q4" hidden></div>
-              </div>
-              <div class="feedback" id="fb-q4"></div>
-            </div>
-            <div class="station-actions"><button class="btn btn-dark" data-check-station="2">Verify Multipurpose Room node</button><span class="station-status" id="status2">Locked</span></div>
-          </div>
-          <div class="lock-layer"><div class="lock-badge">Clear the previous venue first</div></div>
-        </section>
-
-        <section class="station locked" id="station3" data-station="3">
-          <div class="station-head">
-            <div><div class="station-kicker">Forensic node 3</div><h2>Math Studio admin console</h2></div>
-            <div class="time-pill">Suggested: 6 min</div>
-          </div>
-          <div class="station-body">
-            <p class="story-note">The strongest trace comes from the Math Studio. Simplify the payload rule, then calculate the numbered device that sent the command.</p>
-            <div class="question" data-q="q5">
-              <div class="q-row"><div><span class="q-number">Q5.</span> Simplify <span class="math-box">9 + 5(n - 1)</span> to obtain the nth term.</div><span class="lo-tag">LO3</span></div>
-              <div class="answer-line"><input type="text" id="q5" placeholder="simplified expression" aria-label="answer to question 5"></div>
-              <div class="hint-wrap">
-                <button type="button" class="hint-toggle" data-hint-q="q5" aria-controls="hint-q5" aria-expanded="false">💡 Need a hint?</button>
-                <div class="hint-panel" id="hint-q5" hidden></div>
-              </div>
-              <div class="feedback" id="fb-q5"></div>
-            </div>
-            <div class="question" data-q="q6">
-              <div class="q-row"><div><span class="q-number">Q6.</span> A device-ID sequence has nth term <span class="math-box">6n - 5</span>. Find the 23rd term.</div><span class="lo-tag">LO4</span></div>
-              <div class="answer-line"><input type="number" id="q6" aria-label="answer to question 6"><span>device ID</span></div>
-              <div class="hint-wrap">
-                <button type="button" class="hint-toggle" data-hint-q="q6" aria-controls="hint-q6" aria-expanded="false">💡 Need a hint?</button>
-                <div class="hint-panel" id="hint-q6" hidden></div>
-              </div>
-              <div class="feedback" id="fb-q6"></div>
-            </div>
-            <div class="station-actions"><button class="btn btn-dark" data-check-station="3">Verify Math Studio node</button><span class="station-status" id="status3">Locked</span></div>
-          </div>
-          <div class="lock-layer"><div class="lock-badge">Clear the previous venue first</div></div>
-        </section>
-
-        <section class="station locked" id="station4" data-station="4">
-          <div class="station-head">
-            <div><div class="station-kicker">Forensic node 4 · Exam-style evidence</div><h2>Indoor Sports Hall signal map</h2></div>
-            <div class="time-pill">Suggested: 7 min</div>
-          </div>
-          <div class="station-body">
-            <p class="story-note">A signal-map file contains a growing dot pattern. Treat it like an exam question: identify the nth term, then use it to test whether a claimed pattern size is possible.</p>
-            <div class="exam-pattern" aria-label="Signal pattern with 3 nodes in Pattern 1, 7 in Pattern 2, and 11 in Pattern 3">
-              <div class="exam-stage"><svg viewBox="0 0 130 90" role="img" aria-label="Pattern 1 with 3 nodes"><circle cx="35" cy="45" r="7"/><circle cx="65" cy="45" r="7"/><circle cx="95" cy="45" r="7"/></svg><b>Pattern 1</b><span>3 nodes</span></div>
-              <div class="exam-stage"><svg viewBox="0 0 130 90" role="img" aria-label="Pattern 2 with 7 nodes"><circle cx="25" cy="28" r="7"/><circle cx="50" cy="28" r="7"/><circle cx="75" cy="28" r="7"/><circle cx="100" cy="28" r="7"/><circle cx="40" cy="62" r="7"/><circle cx="65" cy="62" r="7"/><circle cx="90" cy="62" r="7"/></svg><b>Pattern 2</b><span>7 nodes</span></div>
-              <div class="exam-stage"><svg viewBox="0 0 130 90" role="img" aria-label="Pattern 3 with 11 nodes"><circle cx="15" cy="22" r="6"/><circle cx="35" cy="22" r="6"/><circle cx="55" cy="22" r="6"/><circle cx="75" cy="22" r="6"/><circle cx="95" cy="22" r="6"/><circle cx="115" cy="22" r="6"/><circle cx="25" cy="63" r="6"/><circle cx="45" cy="63" r="6"/><circle cx="65" cy="63" r="6"/><circle cx="85" cy="63" r="6"/><circle cx="105" cy="63" r="6"/></svg><b>Pattern 3</b><span>11 nodes</span></div>
-            </div>
-            <div class="question" data-q="q7">
-              <div class="q-row"><div><span class="q-number">Q7.</span> Write an expression, in terms of <em>n</em>, for the number of nodes in Pattern <em>n</em>.</div><span class="lo-tag">LO2</span></div>
-              <div class="answer-line"><span>T<sub>n</sub> =</span><input type="text" id="q7" placeholder="expression in n" aria-label="answer to question 7"></div>
-              <div class="hint-wrap">
-                <button type="button" class="hint-toggle" data-hint-q="q7" aria-controls="hint-q7" aria-expanded="false">💡 Need a hint?</button>
-                <div class="hint-panel" id="hint-q7" hidden></div>
-              </div>
-              <div class="feedback" id="fb-q7"></div>
-            </div>
-            <div class="question" data-q="q8">
-              <div class="q-row"><div><span class="q-number">Q8.</span> A corrupted log claims there was a pattern with exactly <strong>86 nodes</strong>. Why is that impossible?</div><span class="lo-tag">LO5</span></div>
-              <div class="choice-list">
-                <label class="choice"><input type="radio" name="q8" value="too-big"> 86 is too large for this pattern.</label>
-                <label class="choice"><input type="radio" name="q8" value="not-whole"> Solving the nth-term equation for 86 gives a value of n that is not a whole number.</label>
-                <label class="choice"><input type="radio" name="q8" value="even"> 86 is even, so it cannot appear in a sequence.</label>
-              </div>
-              <div class="hint-wrap">
-                <button type="button" class="hint-toggle" data-hint-q="q8" aria-controls="hint-q8" aria-expanded="false">💡 Need a hint?</button>
-                <div class="hint-panel" id="hint-q8" hidden></div>
-              </div>
-              <div class="feedback" id="fb-q8"></div>
-            </div>
-            <div class="station-actions"><button class="btn btn-dark" data-check-station="4">Verify Indoor Sports Hall node</button><span class="station-status" id="status4">Locked</span></div>
-          </div>
-          <div class="lock-layer"><div class="lock-badge">Clear the previous venue first</div></div>
-        </section>
-
-        <section class="finale" id="finale">
-          <div class="station-kicker" style="color:#ffb7c1">Final incident response</div>
-          <h2>Identify the compromised account and enter your override code</h2>
-          <p>Use the four venue reports. Select the active account that matches the transmitting device, then type the eight characters you unlocked. Your code is unique to this browser attempt.</p>
-          <div class="suspect-choice-grid">
-            <button class="suspect-choice" data-suspect="palette11"><b>PALETTE11</b> - Aisha Rahman - Art Room - AR-24</button>
-            <button class="suspect-choice" data-suspect="stage05"><b>STAGE05</b> - Ben Koh - Multipurpose Room - MPR-12</button>
-            <button class="suspect-choice" data-suspect="vector07"><b>VECTOR07</b> - Noah Lim - Math Studio - MS-133</button>
-            <button class="suspect-choice" data-suspect="sprint20"><b>SPRINT20</b> - Divya Rao - Indoor Sports Hall - ISH-121</button>
-          </div>
-          <div class="code-entry">
-            <div>
-              <label for="finalCode">Eight-character override code</label>
-              <input class="final-code-input" id="finalCode" type="text" maxlength="8" autocomplete="off" placeholder="XXXXXXXX" aria-label="eight character override code">
-            </div>
-            <button class="btn btn-alert" id="submitFinal">Transmit override</button>
-          </div>
-          <div class="outcome danger" id="wrongCodeOutcome">
-            <strong>ACCESS DENIED - CODE REJECTED</strong>
-            The wipe countdown is still active. Recheck the order of the eight characters in the rail and try again.
-          </div>
-          <div class="outcome warn" id="wrongSuspectOutcome">
-            <strong>CODE VALID - IDENTITY CHECK FAILED</strong>
-            The final override was not executed because the selected account does not match the transmitting device. The countdown continues; review the venue evidence and transmit again.
-          </div>
-          <div class="outcome success" id="successOutcome">
-            <strong>OVERRIDE ACCEPTED - PLD WIPE STOPPED</strong>
-            Override <b id="successCode">--------</b> stopped the wipe. The forensic trace identifies <b>VECTOR07</b>, Noah Lim's Math Studio account on device <b>MS-133</b>. One final recovery prompt has appeared. Inspect it carefully before you act.
-          </div>
-          <div class="feedback" id="finalFeedback"></div>
-        </section>
-
-        <section class="trap-gate" id="trapGate" aria-label="Final cyber-awareness checkpoint">
-          <div class="trap-kicker">Unexpected recovery prompt</div>
-          <h2>One last click?</h2>
-          <p class="trap-story">The wipe has stopped. A new browser tab claims it can "finish cleaning" the PLDs. The message was <strong>not</strong> part of the school response plan.</p>
-          <div class="fake-browser">
-            <div class="fake-browser-bar"><span></span><span></span><span></span><div class="fake-address">http://pld-restore-now.security-check.xyz/urgent/fix</div></div>
-            <div class="fake-page">
-              <div class="fake-alert-icon">!</div>
-              <div>
-                <div class="fake-page-title">CRITICAL SECURITY PATCH READY</div>
-                <p>Your PLD may still be vulnerable. Install the emergency cleanup package immediately to protect your files.</p>
-                <button type="button" class="suspicious-link" id="suspiciousLink">DOWNLOAD &amp; RUN FINAL_CLEANUP.exe</button>
-                <div class="fake-smallprint">Unsigned publisher · external domain · executable download</div>
-              </div>
-            </div>
-            <div class="trap-countdown">This prompt will expire automatically in <strong id="trapCountdown">00:15</strong></div>
-          </div>
-          <div class="trap-result trap-danger" id="trapClickedResult">
-            <strong>SIMULATED TROJAN TRIGGERED</strong>
-            You clicked an unverified executable from a suspicious domain. In this classroom simulation, your device is now shown as "infected" — no real file was downloaded and no real malware exists on this page.
-          </div>
-          <div class="trap-result trap-safe" id="trapSafeResult">
-            <strong>THREAT EXPIRED - LINK QUARANTINED</strong>
-            You waited instead of trusting an unexpected download. The fake recovery prompt timed out without being opened. That was the safer cyber-security decision.
-          </div>
-          <div class="trap-result trap-learning" id="trapLearningResult">
-            <strong>Cyber-awareness note</strong>
-            Unexpected urgency, an unfamiliar domain and an executable download are warning signs. When in doubt, do not click; verify through a trusted channel.
-          </div>
-        </section>
-
-        <div class="trap-modal-overlay" id="trapOutcomeModal" data-open="false" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="trapModalTitle" aria-describedby="trapModalBody">
-          <div class="trap-modal-card" id="trapModalCard">
-            <div class="trap-modal-confetti" id="trapModalConfetti" aria-hidden="true"></div>
-            <div class="trap-modal-icon" id="trapModalIcon" aria-hidden="true">!</div>
-            <div class="trap-modal-kicker" id="trapModalKicker">Cyber-awareness checkpoint</div>
-            <h2 id="trapModalTitle" tabindex="-1">Checkpoint result</h2>
-            <div class="trap-modal-copy" id="trapModalBody"></div>
-            <div class="trap-modal-note" id="trapModalNote"></div>
-            <div class="trap-modal-footer">
-              <div class="trap-modal-wait" id="trapModalWait">Continue unlocks in 5 seconds.</div>
-              <button type="button" class="trap-continue" id="trapContinueBtn" disabled>Continue On · 5s</button>
-            </div>
-          </div>
+      <div class="qblock" id="block-q5">
+        <div class="qtag"><span>🔢 Clue 2a</span></div>
+        <p class="qprompt">Locker codes: 9, 16, 23, 30, ... Write the expression for T<sub>n</sub>.</p>
+        <div class="formula-row">
+          T<sub>n</sub> = <input type="text" inputmode="numeric" id="q5-d" placeholder="d"> n + <input type="text" inputmode="numeric" id="q5-c" placeholder="c">
+          <button class="check-btn" data-check="formula" data-qid="q5" data-d="7" data-c="2">Check</button>
         </div>
-
-        <section class="exit-pass" id="exitPass" aria-label="Part 2 exit pass">
-          <div class="exit-kicker">Part 2 - Post-incident sweep</div>
-          <h2>The Ghost Packet</h2>
-          <p class="exit-story">The PLDs are safe, but one last recovery packet is still moving through the network. Legitimate packet IDs follow a linear sequence. Use the nth term <em>backwards</em> to decide which packet belongs.</p>
-
-          <div class="exit-rule-card">
-            <div class="exit-rule-label">Authorised packet rule</div>
-            <div class="exit-rule" id="exitRule">T<sub>n</sub> = ?</div>
-          </div>
-
-          <div class="exit-prompt"><strong>1.</strong> Exactly one of these packet IDs is in the sequence. Which one?</div>
-          <div class="exit-token-grid">
-            <button type="button" class="exit-option" data-exit-option="A">Packet <span id="exitCandidateA">?</span></button>
-            <button type="button" class="exit-option" data-exit-option="B">Packet <span id="exitCandidateB">?</span></button>
-          </div>
-
-          <div class="exit-prompt"><strong>2.</strong> What positive whole-number position <em>n</em> proves your choice?</div>
-          <div class="answer-line"><span>n =</span><input type="number" id="exitPosition" min="1" step="1" aria-label="position n for the valid packet"></div>
-
-          <div class="exit-prompt"><strong>3.</strong> Why does that prove the packet belongs to the sequence?</div>
-          <div class="choice-list exit-reason-list">
-            <label class="choice"><input type="radio" name="exitReason" value="whole"> Solving the nth-term equation gives a positive whole-number value of n.</label>
-            <label class="choice"><input type="radio" name="exitReason" value="large"> It is the larger of the two packet numbers.</label>
-            <label class="choice"><input type="radio" name="exitReason" value="all"> Every number can be a term of the sequence.</label>
-          </div>
-
-          <div class="hint-wrap">
-            <button type="button" class="hint-toggle" id="exitHintToggle" aria-controls="exitHintPanel" aria-expanded="false">💡 Need an exit-pass hint?</button>
-            <div class="hint-panel" id="exitHintPanel" hidden><strong>Think backwards:</strong> Use the rule as an equation for each candidate. You are looking for the packet that corresponds to a possible position in a sequence. What must be true about that value of <em>n</em>?</div>
-          </div>
-
-          <div class="station-actions">
-            <button class="btn btn-primary" id="checkExitPass">Run final sweep</button>
-            <span class="station-status" id="exitStatus">Awaiting analysis</span>
-          </div>
-          <div class="feedback" id="exitFeedback"></div>
-          <div class="exit-learning" id="exitLearning">
-            <strong>Traceback principle unlocked:</strong> To test whether a number belongs to a sequence, set the nth term equal to that number and solve for <em>n</em>. If <em>n</em> is a positive whole number, the number is in the sequence.
-          </div>
-        </section>
+        <div class="feedback" id="fb-q5"></div>
       </div>
 
-      <aside class="sidebar">
-        <section class="board">
-          <h2>Forensic evidence</h2>
-          <p class="board-sub">Clear each venue to decrypt its report.</p>
-          <div class="clue-list">
-            <div class="clue" id="clue1"><b>Art Room:</b> Encrypted</div>
-            <div class="clue" id="clue2"><b>Multipurpose Room:</b> Encrypted</div>
-            <div class="clue" id="clue3"><b>Math Studio:</b> Encrypted</div>
-            <div class="clue" id="clue4"><b>Indoor Sports Hall:</b> Encrypted</div>
-          </div>
-        </section>
-        <section class="suspects-card">
-          <h2>Active accounts</h2>
-          <div class="suspect-mini"><div class="suspect-name">Aisha Rahman</div><div class="suspect-meta">Art Room - account PALETTE11 - device AR-24</div></div>
-          <div class="suspect-mini"><div class="suspect-name">Ben Koh</div><div class="suspect-meta">Multipurpose Room - account STAGE05 - device MPR-12</div></div>
-          <div class="suspect-mini"><div class="suspect-name">Noah Lim</div><div class="suspect-meta">Math Studio - account VECTOR07 - device MS-133</div></div>
-          <div class="suspect-mini"><div class="suspect-name">Divya Rao</div><div class="suspect-meta">Indoor Sports Hall - account SPRINT20 - device ISH-121</div></div>
-        </section>
-      </aside>
+      <div class="qblock" id="block-q6">
+        <div class="qtag"><span>🔢 Clue 2b</span></div>
+        <p class="qprompt">Another row: 40, 33, 26, 19, ... Write the expression for T<sub>n</sub>.</p>
+        <div class="formula-row">
+          T<sub>n</sub> = <input type="text" inputmode="numeric" id="q6-d" placeholder="d"> n + <input type="text" inputmode="numeric" id="q6-c" placeholder="c">
+          <button class="check-btn" data-check="formula" data-qid="q6" data-d="-7" data-c="47">Check</button>
+        </div>
+        <div class="feedback" id="fb-q6"></div>
+      </div>
+
+      <div class="qblock thinking" id="block-q7">
+        <div class="qtag"><span class="think-flag">💭 THINK</span>Clue 2c</div>
+        <p class="qprompt">Using T<sub>n</sub> = 7n + 2 from Clue 2a, which locker position n has the code 72?</p>
+        <div class="numeric-row">
+          n = <input type="text" inputmode="numeric" id="q7-ans" placeholder="answer">
+          <button class="check-btn" data-check="numeric" data-qid="q7" data-ans="10">Check</button>
+        </div>
+        <div class="feedback" id="fb-q7"></div>
+      </div>
+
+      <div class="qblock" id="block-q8">
+        <div class="qtag"><span>🔢 Clue 2d</span></div>
+        <p class="qprompt">Final locker row: 55, 47, 39, 31, ... Write the expression for T<sub>n</sub>.</p>
+        <div class="formula-row">
+          T<sub>n</sub> = <input type="text" inputmode="numeric" id="q8-d" placeholder="d"> n + <input type="text" inputmode="numeric" id="q8-c" placeholder="c">
+          <button class="check-btn" data-check="formula" data-qid="q8" data-d="-8" data-c="63">Check</button>
+        </div>
+        <div class="feedback" id="fb-q8"></div>
+      </div>
+
     </div>
+    <div class="continue-wrap"><button class="big-btn" id="continue2" disabled>Continue Investigation →</button><div class="hint-note">Answer every clue above to unlock the next scene.</div></div>
+  </div>
+</div>
 
+<!-- STAGE 3 -->
+<div class="screen" id="screen-stage3">
+  <div class="screen-inner">
+    <div class="stage-label">Clue 3 of 5</div>
+    <h2 class="stage-title">The Vault Code</h2>
+    <div class="flavor-text">Inside the PE storeroom, a old safe sits behind the mats — and it needs a code far bigger than anything you've seen yet. No listing terms one by one here. You'll need the formula to jump straight to the answer.</div>
+    <div class="qgrid">
 
-
-    <section class="avatar-reveal" id="avatarReveal" aria-label="Final achievement avatar">
-      <div class="avatar-title-row">
-        <div>
-          <div class="avatar-kicker">Mission identity unlocked</div>
-          <h2>Your Cyber Beaver Avatar</h2>
-          <p>Your final avatar is awarded after the Ghost Packet exit pass. It reflects the badges you earned, with first-attempt accuracy used as a tie-breaker between nearby levels.</p>
+      <div class="qblock" id="block-q9">
+        <div class="qtag"><span>🔢 Clue 3a</span></div>
+        <p class="qprompt">T<sub>n</sub> = 5n + 3. What is T<sub>40</sub>?</p>
+        <div class="numeric-row">
+          T<sub>40</sub> = <input type="text" inputmode="numeric" id="q9-ans" placeholder="answer">
+          <button class="check-btn" data-check="numeric" data-qid="q9" data-ans="203">Check</button>
         </div>
-        <div class="avatar-level-pill" id="avatarLevelPill">Avatar pending</div>
+        <div class="feedback" id="fb-q9"></div>
       </div>
-      <div class="avatar-layout">
-        <div class="avatar-visual-card">
-          <div class="avatar-graphic" id="avatarGraphic" aria-hidden="true"></div>
-          <div class="avatar-nameplate">
-            <div class="avatar-name" id="avatarName">Cyber Beaver</div>
-            <div class="avatar-codename" id="avatarCodename">Awaiting final classification</div>
-          </div>
+
+      <div class="qblock" id="block-q10a">
+        <div class="qtag"><span>🔢 Clue 3b</span></div>
+        <p class="qprompt">A second dial shows: 11, 18, 25, 32, ... Write the expression for T<sub>n</sub>.</p>
+        <div class="formula-row">
+          T<sub>n</sub> = <input type="text" inputmode="numeric" id="q10a-d" placeholder="d"> n + <input type="text" inputmode="numeric" id="q10a-c" placeholder="c">
+          <button class="check-btn" data-check="formula" data-qid="q10a" data-d="7" data-c="4">Check</button>
         </div>
-        <div class="avatar-details">
-          <div class="avatar-message" id="avatarMessage">Complete the exit pass to reveal your final cyber identity.</div>
-          <div class="avatar-stats">
-            <div class="avatar-stat"><b id="avatarBadgeCount">0 / 6</b><span>Badges earned</span></div>
-            <div class="avatar-stat"><b id="avatarScore">0 / 8</b><span>First-try score</span></div>
-            <div class="avatar-stat"><b id="avatarTime">--:--</b><span>Restore time</span></div>
-          </div>
-          <div class="badge-showcase-head">
-            <h3>Badge Vault</h3>
-            <span>Earned badges glow; locked badges remain visible.</span>
-          </div>
-          <div class="avatar-badge-showcase" id="avatarBadgeShowcase"></div>
-          <div class="avatar-criteria" id="avatarCriteria"></div>
+        <div class="feedback" id="fb-q10a"></div>
+      </div>
+
+      <div class="qblock" id="block-q10b">
+        <div class="qtag"><span>🔢 Clue 3c</span></div>
+        <p class="qprompt">Using T<sub>n</sub> = 7n + 4, what is T<sub>60</sub>?</p>
+        <div class="numeric-row">
+          T<sub>60</sub> = <input type="text" inputmode="numeric" id="q10b-ans" placeholder="answer">
+          <button class="check-btn" data-check="numeric" data-qid="q10b" data-ans="424">Check</button>
         </div>
+        <div class="feedback" id="fb-q10b"></div>
       </div>
-    </section>
 
-    <section class="report" id="report">
-      <div class="print-only"><h1>PLD Lockdown: Code Black - Investigator Report</h1></div>
-      <div class="report-top">
-        <div class="score-ring" id="scoreRing"><span id="scoreText">0/8</span></div>
-        <div>
-          <div class="station-kicker">First-attempt assessment</div>
-          <h2 id="rankTitle">Network Trainee</h2>
-          <p id="reportIdentity">Investigator report</p>
-          <p id="rankMessage">Review your first-attempt evidence below.</p>
+      <div class="qblock thinking" id="block-q11">
+        <div class="qtag"><span class="think-flag">💭 THINK</span>Clue 3d</div>
+        <p class="qprompt">A final note boasts: "the real code is the <strong>1000th</strong> term of T<sub>n</sub> = 5n + 3." What's the code?</p>
+        <div class="numeric-row">
+          T<sub>1000</sub> = <input type="text" inputmode="numeric" id="q11-ans" placeholder="answer">
+          <button class="check-btn" data-check="numeric" data-qid="q11" data-ans="5003">Check</button>
         </div>
+        <div class="feedback" id="fb-q11"></div>
       </div>
-      <div class="mastery-grid" id="masteryGrid"></div>
-      <div class="next-step" id="nextStep"></div>
-      <div class="report-actions">
-        <button class="btn btn-dark" onclick="window.print()">Print report</button>
-        <button class="btn btn-soft" id="copySummary">Copy summary</button>
-        <button class="btn btn-danger" id="newInvestigation">Start new investigation</button>
+
+    </div>
+    <div class="continue-wrap"><button class="big-btn" id="continue3" disabled>Continue Investigation →</button><div class="hint-note">Answer every clue above to unlock the next scene.</div></div>
+  </div>
+</div>
+
+<!-- STAGE 4 -->
+<div class="screen" id="screen-stage4">
+  <div class="screen-inner">
+    <div class="stage-label">Clue 4 of 5</div>
+    <h2 class="stage-title">Ticket Trouble</h2>
+    <div class="flavor-text">The vault held a seating chart for the Founder's Day hall, not the Cup — but a sticky note pinned to it might tell you who's been rearranging things. Time to apply what you've learned to a real problem.</div>
+    <div class="qgrid">
+
+      <div class="qblock" id="block-q12a">
+        <div class="qtag"><span>🔢 Clue 4a</span></div>
+        <p class="qprompt">Chairs per row: Row 1 = 10, Row 2 = 16, Row 3 = 22, Row 4 = 28. Write the expression for T<sub>n</sub>.</p>
+        <div class="formula-row">
+          T<sub>n</sub> = <input type="text" inputmode="numeric" id="q12a-d" placeholder="d"> n + <input type="text" inputmode="numeric" id="q12a-c" placeholder="c">
+          <button class="check-btn" data-check="formula" data-qid="q12a" data-d="6" data-c="4">Check</button>
+        </div>
+        <div class="feedback" id="fb-q12a"></div>
       </div>
-    </section>
-  </main>
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-
-  <script>
-    const QUESTION_BANK = {
-      q1: { type: 'number', answer: 27, lo: 'LO1', hint: 'Look at the gaps between neighbouring terms. Do the same-sized jumps keep repeating? Use that pattern to predict just one more term.' },
-      q2: { type: 'expr', answer: '5n+3', lo: 'LO2', hint: 'For a linear sequence, try the structure Tn = dn + c. The repeated change tells you what d represents. Then ask what adjustment c is needed so the rule reproduces the first term.' },
-      q3: { type: 'number', answer: 17, lo: 'LO1', hint: 'The sequence is moving down. Compare neighbouring terms and decide what signed change is repeating. What should happen one more time?' },
-      q4: { type: 'expr', answer: '-4n+22', lo: 'LO2', hint: 'Use Tn = dn + c. Since the terms decrease by a constant amount, think about the sign of d. Then make your rule reproduce T1 = 18.' },
-      q5: { type: 'expr', answer: '5n+4', lo: 'LO3', mustSimplify: true, hint: 'Recall the distributive idea a(b - c) = ab - ac. Expand the bracket first, keep the n-term separate, and then think about which constant terms can be combined.' },
-      q6: { type: 'number', answer: 133, lo: 'LO4', hint: 'You already have the rule Tn = 6n - 5. The subscript tells you the position being requested. What should n represent for the 23rd term?' },
-      q7: { type: 'expr', answer: '4n-1', lo: 'LO2', hint: 'Turn the diagram into the number sequence 3, 7, 11, .... Then use Tn = dn + c. What does the repeated increase tell you about d, and what must c do so Pattern 1 is reproduced?' },
-      q8: { type: 'radio', answer: 'not-whole', lo: 'LO5', hint: 'Use your rule from Q7 and imagine that 86 is a term: Tn = 86. You do not need to list patterns. Ask what kind of value n must be for a genuine pattern position.' }
-    };
-
-    const STATIONS = {
-      1: ['q1', 'q2'],
-      2: ['q3', 'q4'],
-      3: ['q5', 'q6'],
-      4: ['q7', 'q8']
-    };
-
-    const CLUES = {
-      1: '<b>Art Room:</b> Account <b>PALETTE11</b> was tied to device <b>AR-24</b>, which was shut down and sealed before 8:18 a.m. PALETTE11 is eliminated.',
-      2: '<b>Multipurpose Room:</b> Account <b>STAGE05</b> was active only on <b>MPR-12</b>, a guest-network device with no administrator token. STAGE05 is eliminated.',
-      3: '<b>Math Studio:</b> The lock command was sent from device <b>MS-133</b> using account <b>VECTOR07</b>.',
-      4: '<b>Indoor Sports Hall:</b> Account <b>SPRINT20</b> was assigned to <b>ISH-121</b>, which remained docked and offline throughout the incident. SPRINT20 is eliminated.'
-    };
-
-    const BADGES = {
-      art: { label: 'Art Cipher', station: 1 },
-      mpr: { label: 'Stage Signal', station: 2 },
-      math: { label: 'Math Mainframe', station: 3 },
-      sports: { label: 'Hall Defender', station: 4 },
-      rapid: { label: 'Rapid Responder', timing: 'under10' },
-      deadline: { label: 'Deadline Defender', timing: 'within20' }
-    };
-
-
-
-    const AVATAR_LEVELS = {
-      novice: {
-        title: 'Novice Beaver',
-        codename: 'Firewall Nibbler',
-        tier: 'Level 1 / Getting Started',
-        message: 'You stayed with the investigation, corrected your evidence, and restored the network. Persistence is a real problem-solving skill.',
-        criteria: 'Mission cleared with the four venue badges. This level appears when first-attempt accuracy is still developing.'
-      },
-      junior: {
-        title: 'Junior Beaver',
-        codename: 'Circuit Chomper',
-        tier: 'Level 2 / Solid Progress',
-        message: 'Good work, agent. Your sequence instincts are getting sharper, and you are building reliable nth-term reasoning.',
-        criteria: 'Four venue badges plus a solid first-attempt score of at least 5 out of 8.'
-      },
-      elite: {
-        title: 'Elite Beaver',
-        codename: 'Cipher Tail',
-        tier: 'Level 3 / Nearly There',
-        message: 'Elite thinking. You combined accurate pattern work with a strong mission finish and handled the Ghost Packet like a real analyst.',
-        criteria: 'Earn the Deadline Defender badge, or reach 7-8 correct on the first attempt without the Rapid Responder badge.'
-      },
-      speedster: {
-        title: 'Speedster Beaver',
-        codename: 'Turbo Tail',
-        tier: 'Level 4 / Lightning Response',
-        message: 'Lightning fast and laser sharp. You restored the system in under 10 minutes and kept your reasoning moving under pressure.',
-        criteria: 'Earn all six badges by clearing the four venues and restoring the system in under 10 minutes.'
-      },
-      legendary: {
-        title: 'Legendary Beaver',
-        codename: 'Raging Beaver',
-        tier: 'Level 5 / Full Mastery',
-        message: 'You did it all: skill, speed and accuracy. The network is safe, the Ghost Packet is traced, and Raging Beaver status is officially yours.',
-        criteria: 'Earn all six badges and score at least 7 out of 8 on the first attempt.'
-      }
-    };
-
-    const LO_LABELS = {
-      LO1: 'Recognise patterns',
-      LO2: 'Find nth terms',
-      LO3: 'Simplify expressions',
-      LO4: 'Calculate later terms',
-      LO5: 'Apply and explain'
-    };
-
-    const TOTAL_SECONDS = 1200;
-    const STORAGE_KEY = 'pldLockdownStateV11Rapid10';
-    const LEGACY_STORAGE_KEYS = ['pldLockdownStateV5ExamTrap', 'pldLockdownStateV9NoHold'];
-    const CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-    const CODE_DIGITS = '23456789';
-
-    const state = {
-      completedStations: new Set(),
-      verifiedQuestions: new Set(),
-      attempted: {},
-      firstCorrect: {},
-      earnedBadges: new Set(),
-      selectedSuspect: null,
-      codeAccepted: false,
-      solved: false,
-      timerSeconds: TOTAL_SECONDS,
-      timerRunning: false,
-      timerHandle: null,
-      timerStartedAtMs: null,
-      timerDeadlineMs: null,
-      timerStoppedAtMs: null,
-      completionElapsedSeconds: null,
-      fiveMinuteWarningShown: false,
-      overrideCode: '',
-      trapStartedAtMs: null,
-      trapOutcome: null,
-      trapOutcomeAtMs: null,
-      trapModalDismissed: false,
-      trapTimerHandle: null,
-      exitChallenge: null,
-      exitSelection: null,
-      exitPassCompleted: false
-    };
-
-    function secureRandomInt(maxExclusive) {
-      if (!Number.isInteger(maxExclusive) || maxExclusive <= 0) return 0;
-      if (window.crypto && window.crypto.getRandomValues) {
-        const array = new Uint32Array(1);
-        const limit = Math.floor(0x100000000 / maxExclusive) * maxExclusive;
-        let value;
-        do {
-          window.crypto.getRandomValues(array);
-          value = array[0];
-        } while (value >= limit);
-        return value % maxExclusive;
-      }
-      return Math.floor(Math.random() * maxExclusive);
-    }
-
-    function pickRandom(text) {
-      return text[secureRandomInt(text.length)];
-    }
-
-    function shuffleArray(items) {
-      for (let i = items.length - 1; i > 0; i -= 1) {
-        const j = secureRandomInt(i + 1);
-        [items[i], items[j]] = [items[j], items[i]];
-      }
-      return items;
-    }
-
-    function generateOverrideCode() {
-      const chars = [];
-      for (let i = 0; i < 5; i += 1) chars.push(pickRandom(CODE_LETTERS));
-      for (let i = 0; i < 3; i += 1) chars.push(pickRandom(CODE_DIGITS));
-      return shuffleArray(chars).join('');
-    }
-
-    function generateExitChallenge() {
-      const coefficients = [3, 4, 5, 6, 7];
-      const a = coefficients[secureRandomInt(coefficients.length)];
-      const b = 1 + secureRandomInt(6);
-      const validN = 6 + secureRandomInt(20);
-      const validValue = a * validN + b;
-      const offset = 1 + secureRandomInt(a - 1);
-      let decoyValue = secureRandomInt(2) === 0 ? validValue - offset : validValue + offset;
-      if (decoyValue <= 0) decoyValue = validValue + offset;
-      const validSlot = secureRandomInt(2) === 0 ? 'A' : 'B';
-      return {
-        a,
-        b,
-        validN,
-        validValue,
-        decoyValue,
-        validSlot,
-        candidateA: validSlot === 'A' ? validValue : decoyValue,
-        candidateB: validSlot === 'B' ? validValue : decoyValue
-      };
-    }
-
-    function stripLeftSide(raw) {
-      const text = String(raw || '').trim();
-      return text.includes('=') ? text.split('=').pop() : text;
-    }
-
-    function normaliseForEvaluation(raw) {
-      let expr = stripLeftSide(raw)
-        .toLowerCase()
-        .replace(/\s+/g, '')
-        .replace(/[−–—]/g, '-')
-        .replace(/[×·]/g, '*')
-        .replace(/\^/g, '**');
-      expr = expr
-        .replace(/(\d|n)\(/g, '$1*(')
-        .replace(/\)(\d|n|\()/g, ')*$1')
-        .replace(/(\d)n/g, '$1*n');
-      return expr;
-    }
-
-    function evaluateLinear(raw, nValue) {
-      const expr = normaliseForEvaluation(raw);
-      if (!expr || !/^[0-9n+\-*/().]+$/.test(expr)) return NaN;
-      try {
-        return Function('n', `"use strict"; return (${expr});`)(nValue);
-      } catch (error) {
-        return NaN;
-      }
-    }
-
-    function equivalentExpression(value, target, mustSimplify) {
-      const raw = stripLeftSide(value);
-      if (!raw.trim()) return false;
-      if (mustSimplify && /[()]/.test(raw)) return false;
-      return [1, 2, 5, 11].every(n => {
-        const a = evaluateLinear(raw, n);
-        const b = evaluateLinear(target, n);
-        return Number.isFinite(a) && Number.isFinite(b) && Math.abs(a - b) < 1e-9;
-      });
-    }
-
-    function getValue(qid, q) {
-      if (q.type === 'radio') {
-        const selected = document.querySelector(`input[name="${qid}"]:checked`);
-        return selected ? selected.value : '';
-      }
-      return document.getElementById(qid).value;
-    }
-
-    function isCorrect(qid) {
-      const q = QUESTION_BANK[qid];
-      const value = getValue(qid, q);
-      if (value === '') return null;
-      if (q.type === 'expr') return equivalentExpression(value, q.answer, q.mustSimplify);
-      if (q.type === 'number') return Number(value) === Number(q.answer);
-      return value === q.answer;
-    }
-
-    function setHintOpen(qid, open) {
-      const button = document.querySelector(`[data-hint-q="${qid}"]`);
-      const panel = document.getElementById(`hint-${qid}`);
-      if (!button || !panel) return;
-      panel.textContent = QUESTION_BANK[qid]?.hint || '';
-      panel.hidden = !open;
-      button.setAttribute('aria-expanded', open ? 'true' : 'false');
-      button.textContent = open ? '💡 Hide hint' : '💡 Need a hint?';
-    }
-
-    function initialiseQuestionHints() {
-      document.querySelectorAll('[data-hint-q]').forEach(button => {
-        const qid = button.dataset.hintQ;
-        const panel = document.getElementById(`hint-${qid}`);
-        if (panel) panel.textContent = QUESTION_BANK[qid]?.hint || '';
-        button.addEventListener('click', () => {
-          const isOpen = button.getAttribute('aria-expanded') === 'true';
-          setHintOpen(qid, !isOpen);
-        });
-      });
-    }
-
-    function markQuestion(qid, result) {
-      const box = document.querySelector(`[data-q="${qid}"]`);
-      const fb = document.getElementById(`fb-${qid}`);
-      box.classList.remove('correct', 'incorrect');
-      fb.classList.remove('good', 'bad');
-      if (result === null) {
-        fb.textContent = 'Enter or select an answer before checking.';
-        fb.classList.add('bad');
-        return;
-      }
-      if (state.attempted[qid] === undefined) {
-        state.attempted[qid] = true;
-        state.firstCorrect[qid] = result;
-      }
-      if (result) {
-        box.classList.add('correct');
-        fb.textContent = `Verified. Override character ${qid.slice(1)} unlocked.`;
-        fb.classList.add('good');
-        state.verifiedQuestions.add(qid);
-      } else {
-        box.classList.add('incorrect');
-        fb.textContent = 'Not yet. Use the thinking hint, then try the question again.';
-        fb.classList.add('bad');
-        setHintOpen(qid, true);
-      }
-    }
-
-    function checkStation(stationNumber) {
-      const qids = STATIONS[stationNumber];
-      const results = qids.map(qid => {
-        const result = isCorrect(qid);
-        markQuestion(qid, result);
-        return result;
-      });
-      updateCodeRail();
-      if (results.every(Boolean)) completeStation(stationNumber);
-      else toast('Some data is still inconsistent. Use the hints, correct it, and verify again.');
-      saveState();
-    }
-
-    function completeStation(n, silent = false) {
-      const newlyCompleted = !state.completedStations.has(n);
-      if (newlyCompleted) {
-        state.completedStations.add(n);
-        const clue = document.getElementById(`clue${n}`);
-        clue.innerHTML = CLUES[n];
-        clue.classList.add('unlocked');
-        const status = document.getElementById(`status${n}`);
-        status.textContent = 'Cleared';
-        status.style.color = 'var(--green)';
-      }
-      const next = document.getElementById(`station${n + 1}`);
-      if (next) {
-        next.classList.remove('locked');
-        document.getElementById(`status${n + 1}`).textContent = 'Ready';
-      }
-      if (state.completedStations.size === 4) {
-        document.getElementById('finale').classList.add('show');
-        if (!silent) setTimeout(() => document.getElementById('finale').scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
-      }
-      updateProgress();
-      updateBadges(true);
-      if (newlyCompleted && !silent) toast(`Venue cleared. Badge earned: ${BADGES[['art','mpr','math','sports'][n - 1]].label}`);
-    }
-
-    function updateProgress() {
-      const done = state.completedStations.size;
-      document.getElementById('progressText').textContent = `${done} of 4 venues`;
-      document.getElementById('progressFill').style.width = `${done * 25}%`;
-    }
-
-    function updateCodeRail() {
-      Object.keys(QUESTION_BANK).forEach((qid, index) => {
-        const slot = document.getElementById(`slot-${qid}`);
-        const unlocked = state.verifiedQuestions.has(qid);
-        const character = state.overrideCode ? state.overrideCode[index] : '?';
-        slot.textContent = unlocked ? character : '?';
-        slot.classList.toggle('unlocked', unlocked);
-        slot.setAttribute('aria-label', `Code character ${qid.slice(1)}: ${unlocked ? character : 'locked'}`);
-      });
-    }
-
-    function badgeIsEarned(id, badge) {
-      if (badge.station) return state.completedStations.has(badge.station);
-      if (!state.solved || state.completionElapsedSeconds === null) return false;
-      if (badge.timing === 'under10') return state.completionElapsedSeconds < 10 * 60;
-      if (badge.timing === 'within20') return state.completionElapsedSeconds <= TOTAL_SECONDS;
-      return false;
-    }
-
-    function updateBadges(silent = false) {
-      const newlyEarned = [];
-      Object.entries(BADGES).forEach(([id, badge]) => {
-        const earnedNow = badgeIsEarned(id, badge);
-        if (earnedNow && !state.earnedBadges.has(id)) {
-          state.earnedBadges.add(id);
-          newlyEarned.push(badge.label);
-        }
-        const el = document.getElementById(`badge-${id}`);
-        const earned = state.earnedBadges.has(id);
-        el.classList.toggle('earned', earned);
-        const status = el.querySelector('.badge-status');
-        if (earned) status.textContent = 'EARNED';
-        el.setAttribute('aria-label', `${badge.label}: ${earned ? 'earned' : 'locked'}`);
-      });
-      document.getElementById('badgeCount').textContent = `${state.earnedBadges.size} / 6`;
-      if (!silent && newlyEarned.length) toast(`Badge${newlyEarned.length > 1 ? 's' : ''} earned: ${newlyEarned.join(' + ')}`);
-    }
-
-    function selectSuspect(id, button, persist = true) {
-      state.selectedSuspect = id;
-      document.querySelectorAll('.suspect-choice').forEach(b => b.classList.remove('selected'));
-      button.classList.add('selected');
-      if (persist) saveState();
-    }
-
-    function normaliseCode(raw) {
-      return String(raw || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-    }
-
-    function showOutcome(id) {
-      ['wrongCodeOutcome', 'wrongSuspectOutcome', 'successOutcome'].forEach(outcomeId => {
-        document.getElementById(outcomeId).classList.toggle('show', outcomeId === id);
-      });
-    }
-
-    function submitFinal() {
-      const feedback = document.getElementById('finalFeedback');
-      const code = normaliseCode(document.getElementById('finalCode').value);
-      if (!state.selectedSuspect) {
-        feedback.textContent = 'Select a suspect before transmitting the override.';
-        feedback.className = 'feedback bad';
-        return;
-      }
-      if (code.length !== 8) {
-        feedback.textContent = 'The override must contain exactly eight characters.';
-        feedback.className = 'feedback bad';
-        return;
-      }
-      if (code !== state.overrideCode) {
-        state.codeAccepted = false;
-        showOutcome('wrongCodeOutcome');
-        feedback.textContent = 'Override rejected. The timer continues.';
-        feedback.className = 'feedback bad';
-        saveState();
-        return;
-      }
-
-      state.codeAccepted = true;
-      if (state.selectedSuspect !== 'vector07') {
-        showOutcome('wrongSuspectOutcome');
-        feedback.textContent = 'The code is valid, but the identity check failed. The timer continues.';
-        feedback.className = 'feedback bad';
-        saveState();
-        return;
-      }
-
-      state.solved = true;
-      state.timerStoppedAtMs = Date.now();
-      state.completionElapsedSeconds = Math.max(0, Math.floor((state.timerStoppedAtMs - state.timerStartedAtMs) / 1000));
-      stopTimerInterval();
-      syncTimerFromClock();
-      document.getElementById('successCode').textContent = state.overrideCode;
-      showOutcome('successOutcome');
-      feedback.textContent = 'Override accepted. A final recovery prompt has appeared below. Inspect it before you act.';
-      feedback.className = 'feedback good';
-      updateBadges();
-      primeTrapAudio();
-      showTrapGate(true);
-      saveState();
-    }
-
-    function stopTrapTimer() {
-      clearInterval(state.trapTimerHandle);
-      state.trapTimerHandle = null;
-    }
-
-    function trapSecondsRemaining() {
-      if (!state.trapStartedAtMs) return 15;
-      return Math.max(0, Math.ceil((state.trapStartedAtMs + 15000 - Date.now()) / 1000));
-    }
-
-    function renderTrapGate() {
-      const gate = document.getElementById('trapGate');
-      const countdown = document.getElementById('trapCountdown');
-      const link = document.getElementById('suspiciousLink');
-      const clicked = document.getElementById('trapClickedResult');
-      const safe = document.getElementById('trapSafeResult');
-      const learning = document.getElementById('trapLearningResult');
-      if (!gate || !countdown || !link) return;
-      gate.classList.add('show');
-      clicked.classList.toggle('show', state.trapOutcome === 'clicked');
-      safe.classList.toggle('show', state.trapOutcome === 'safe');
-      learning.classList.toggle('show', Boolean(state.trapOutcome));
-      link.disabled = Boolean(state.trapOutcome);
-      if (state.trapOutcome === 'clicked') {
-        countdown.textContent = 'TRIGGERED';
-        return;
-      }
-      if (state.trapOutcome === 'safe') {
-        countdown.textContent = 'EXPIRED';
-        return;
-      }
-      const left = trapSecondsRemaining();
-      countdown.textContent = `00:${String(left).padStart(2,'0')}`;
-      if (left <= 0) resolveTrapSafely();
-    }
-
-    function showTrapGate(scroll = true) {
-      const gate = document.getElementById('trapGate');
-      if (!state.trapStartedAtMs && !state.trapOutcome) state.trapStartedAtMs = Date.now();
-      gate.classList.add('show');
-      renderTrapGate();
-      stopTrapTimer();
-      if (!state.trapOutcome) {
-        state.trapTimerHandle = setInterval(() => {
-          renderTrapGate();
-          if (state.trapOutcome) stopTrapTimer();
-        }, 250);
-      }
-      saveState();
-      if (scroll) setTimeout(() => gate.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
-    }
-
-    let trapAudioContext = null;
-    let trapModalTimerHandle = null;
-
-    function getTrapAudioContext() {
-      if (trapAudioContext) return trapAudioContext;
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return null;
-      try { trapAudioContext = new AudioCtx(); } catch (error) { trapAudioContext = null; }
-      return trapAudioContext;
-    }
-
-    function primeTrapAudio() {
-      const ctx = getTrapAudioContext();
-      if (ctx && ctx.state === 'suspended') ctx.resume().catch(() => {});
-    }
-
-    function playTrojanAlarm() {
-      const ctx = getTrapAudioContext();
-      if (!ctx) return;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-      const start = ctx.currentTime + 0.02;
-      // Three short, modest-volume alert pulses. Intentionally not loud.
-      [0, 0.38, 0.76].forEach((offset, index) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = index % 2 ? 'square' : 'sawtooth';
-        osc.frequency.setValueAtTime(index % 2 ? 520 : 390, start + offset);
-        gain.gain.setValueAtTime(0.0001, start + offset);
-        gain.gain.exponentialRampToValueAtTime(0.028, start + offset + 0.02);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.22);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(start + offset);
-        osc.stop(start + offset + 0.24);
-      });
-    }
-
-    function playSafeCheer() {
-      const ctx = getTrapAudioContext();
-      if (!ctx) return;
-      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
-      const start = ctx.currentTime + 0.03;
-      // A brief celebratory chime plus a soft applause-like noise burst.
-      [523.25, 659.25, 783.99, 1046.5].forEach((freq, index) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(freq, start + index * 0.11);
-        gain.gain.setValueAtTime(0.0001, start + index * 0.11);
-        gain.gain.exponentialRampToValueAtTime(0.035, start + index * 0.11 + 0.025);
-        gain.gain.exponentialRampToValueAtTime(0.0001, start + index * 0.11 + 0.28);
-        osc.connect(gain).connect(ctx.destination);
-        osc.start(start + index * 0.11);
-        osc.stop(start + index * 0.11 + 0.3);
-      });
-      try {
-        const duration = 0.55;
-        const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * duration), ctx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-        const source = ctx.createBufferSource();
-        const filter = ctx.createBiquadFilter();
-        const gain = ctx.createGain();
-        source.buffer = buffer;
-        filter.type = 'bandpass';
-        filter.frequency.value = 1500;
-        filter.Q.value = 0.8;
-        gain.gain.value = 0.018;
-        source.connect(filter).connect(gain).connect(ctx.destination);
-        source.start(start + 0.08);
-      } catch (error) { /* celebration sound is optional */ }
-    }
-
-    function launchTrapConfetti() {
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      const layer = document.getElementById('trapModalConfetti');
-      if (!layer) return;
-      layer.innerHTML = '';
-      for (let i = 0; i < 72; i += 1) {
-        const piece = document.createElement('span');
-        piece.className = 'confetti-piece';
-        piece.style.left = `${Math.random() * 100}%`;
-        piece.style.background = `hsl(${Math.floor(Math.random() * 360)} 82% 62%)`;
-        piece.style.setProperty('--fall', `${2.1 + Math.random() * 1.9}s`);
-        piece.style.setProperty('--delay', `${Math.random() * 0.55}s`);
-        piece.style.setProperty('--drift', `${-100 + Math.random() * 200}px`);
-        piece.style.setProperty('--spin', `${360 + Math.random() * 900}deg`);
-        layer.appendChild(piece);
-      }
-      setTimeout(() => { if (layer) layer.innerHTML = ''; }, 4800);
-    }
-
-    function mountTrapOutcomeScreen() {
-      const overlay = document.getElementById('trapOutcomeModal');
-      if (!overlay) return null;
-      // A fixed element can be clipped or repositioned by transformed ancestors.
-      // Mounting directly under <body> makes this a true viewport takeover screen.
-      if (overlay.parentElement !== document.body) document.body.appendChild(overlay);
-      return overlay;
-    }
-
-    function trapModalSecondsRemaining() {
-      if (!state.trapOutcomeAtMs) return 5;
-      return Math.max(0, Math.ceil((state.trapOutcomeAtMs + 5000 - Date.now()) / 1000));
-    }
-
-    function stopTrapModalTimer() {
-      clearInterval(trapModalTimerHandle);
-      trapModalTimerHandle = null;
-    }
-
-    function updateTrapModalContinue() {
-      const button = document.getElementById('trapContinueBtn');
-      const wait = document.getElementById('trapModalWait');
-      if (!button || !wait) return;
-      const left = trapModalSecondsRemaining();
-      button.disabled = left > 0;
-      button.textContent = left > 0 ? `Continue On · ${left}s` : 'Continue On';
-      wait.textContent = left > 0 ? `Read the message. Continue unlocks in ${left} second${left === 1 ? '' : 's'}.` : 'You can continue to the Ghost Packet exit pass.';
-      if (left <= 0) stopTrapModalTimer();
-    }
-
-    function showTrapOutcomeModal(playEffect = false) {
-      if (!state.trapOutcome || state.trapModalDismissed) return;
-      if (!state.trapOutcomeAtMs) state.trapOutcomeAtMs = Date.now();
-      const overlay = mountTrapOutcomeScreen();
-      const card = document.getElementById('trapModalCard');
-      const icon = document.getElementById('trapModalIcon');
-      const kicker = document.getElementById('trapModalKicker');
-      const title = document.getElementById('trapModalTitle');
-      const body = document.getElementById('trapModalBody');
-      const note = document.getElementById('trapModalNote');
-      if (!overlay || !card || !title || !body || !note) return;
-
-      const clicked = state.trapOutcome === 'clicked';
-      card.classList.toggle('danger', clicked);
-      card.classList.toggle('safe', !clicked);
-      icon.textContent = clicked ? '!' : '✓';
-      kicker.textContent = clicked ? 'Security incident simulation' : 'Excellent cyber judgement';
-      title.textContent = clicked ? 'SIMULATED TROJAN TRIGGERED' : 'THREAT EXPIRED — LINK QUARANTINED';
-      body.innerHTML = clicked
-        ? '<strong>You clicked an unverified executable from a suspicious domain.</strong> In this classroom simulation, your device is now shown as "infected" — no real file was downloaded and no real malware exists on this page.'
-        : '<strong>You resisted the suspicious download and waited for the prompt to expire.</strong> The link has been quarantined and your simulated device remains safe. Great judgement under pressure.';
-      note.innerHTML = clicked
-        ? '<strong>Cyber-awareness note</strong>Unexpected urgency, an unfamiliar domain and an executable download are warning signs. When in doubt, do not click; verify through a trusted channel.'
-        : '<strong>Cyber-awareness note</strong>You did the safer thing: you did not trust an unexpected urgent download. Verify unusual requests through a trusted school channel before opening files or running software.';
-
-      overlay.setAttribute('data-open', 'true');
-      overlay.setAttribute('aria-hidden', 'false');
-      overlay.classList.add('show');
-      // Inline !important is a defensive fallback against host/page CSS and browser extensions.
-      overlay.style.setProperty('display', 'flex', 'important');
-      overlay.style.setProperty('visibility', 'visible', 'important');
-      overlay.style.setProperty('opacity', '1', 'important');
-      document.body.classList.add('trap-modal-open');
-      stopTrapModalTimer();
-      updateTrapModalContinue();
-      if (trapModalSecondsRemaining() > 0) trapModalTimerHandle = setInterval(updateTrapModalContinue, 200);
-      if (playEffect) {
-        if (clicked) playTrojanAlarm();
-        else { playSafeCheer(); launchTrapConfetti(); }
-      }
-      saveState();
-      setTimeout(() => document.getElementById('trapModalTitle')?.focus?.(), 0);
-    }
-
-    function continueFromTrapModal() {
-      if (trapModalSecondsRemaining() > 0) return;
-      state.trapModalDismissed = true;
-      stopTrapModalTimer();
-      const overlay = mountTrapOutcomeScreen();
-      if (overlay) {
-        overlay.classList.remove('show');
-        overlay.setAttribute('data-open', 'false');
-        overlay.setAttribute('aria-hidden', 'true');
-        overlay.style.setProperty('display', 'none', 'important');
-        overlay.style.setProperty('visibility', 'hidden', 'important');
-        overlay.style.setProperty('opacity', '0', 'important');
-      }
-      document.body.classList.remove('trap-modal-open');
-      saveState();
-      showExitPass(true);
-    }
-
-    function resolveTrapSafely() {
-      if (state.trapOutcome) return;
-      state.trapOutcome = 'safe';
-      state.trapOutcomeAtMs = Date.now();
-      state.trapModalDismissed = false;
-      stopTrapTimer();
-      renderTrapGate();
-      toast('Suspicious link expired. Threat quarantined.');
-      saveState();
-      showTrapOutcomeModal(true);
-    }
-
-    function triggerTrojanSimulation() {
-      if (state.trapOutcome) return;
-      state.trapOutcome = 'clicked';
-      state.trapOutcomeAtMs = Date.now();
-      state.trapModalDismissed = false;
-      stopTrapTimer();
-      renderTrapGate();
-      toast('Simulation: Trojan triggered. No real malware was downloaded.');
-      saveState();
-      showTrapOutcomeModal(true);
-    }
-
-    function renderExitChallenge() {
-      if (!state.exitChallenge) state.exitChallenge = generateExitChallenge();
-      const c = state.exitChallenge;
-      document.getElementById('exitRule').innerHTML = `T<sub>n</sub> = ${c.a}n + ${c.b}`;
-      document.getElementById('exitCandidateA').textContent = c.candidateA;
-      document.getElementById('exitCandidateB').textContent = c.candidateB;
-      document.querySelectorAll('[data-exit-option]').forEach(button => {
-        button.classList.toggle('selected', button.dataset.exitOption === state.exitSelection);
-      });
-      const exitPass = document.getElementById('exitPass');
-      exitPass.classList.toggle('complete', state.exitPassCompleted);
-      document.getElementById('exitLearning').classList.toggle('show', state.exitPassCompleted);
-      if (state.exitPassCompleted) {
-        document.getElementById('exitStatus').textContent = 'Exit pass cleared';
-        document.getElementById('exitStatus').style.color = 'var(--green)';
-        document.getElementById('exitFeedback').textContent = `Correct. Packet ${c.validValue} is term ${c.validN}.`;
-        document.getElementById('exitFeedback').className = 'feedback good';
-      }
-    }
-
-    function showExitPass(scroll = true) {
-      const section = document.getElementById('exitPass');
-      section.classList.add('show');
-      renderExitChallenge();
-      if (scroll) setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
-    }
-
-    function selectExitOption(option) {
-      state.exitSelection = option;
-      document.querySelectorAll('[data-exit-option]').forEach(button => {
-        button.classList.toggle('selected', button.dataset.exitOption === option);
-      });
-      saveState();
-    }
-
-    function checkExitPass() {
-      if (!state.solved || !state.trapOutcome) return;
-      const c = state.exitChallenge;
-      const positionRaw = document.getElementById('exitPosition').value;
-      const reason = document.querySelector('input[name="exitReason"]:checked');
-      const feedback = document.getElementById('exitFeedback');
-      if (!state.exitSelection || positionRaw === '' || !reason) {
-        feedback.textContent = 'Complete all three parts of the exit pass before running the final sweep.';
-        feedback.className = 'feedback bad';
-        return;
-      }
-      const correct = state.exitSelection === c.validSlot && Number(positionRaw) === c.validN && reason.value === 'whole';
-      if (!correct) {
-        feedback.textContent = 'Not quite. Set the nth-term rule equal to each packet ID and solve for n. The valid packet must give a positive whole number.';
-        feedback.className = 'feedback bad';
-        document.getElementById('exitStatus').textContent = 'Trace still unresolved';
-        saveState();
-        return;
-      }
-      state.exitPassCompleted = true;
-      document.getElementById('exitLearning').classList.add('show');
-      document.getElementById('exitPass').classList.add('complete');
-      document.getElementById('exitStatus').textContent = 'Exit pass cleared';
-      document.getElementById('exitStatus').style.color = 'var(--green)';
-      feedback.textContent = `Correct. Packet ${c.validValue} is term ${c.validN}; the other packet does not produce a whole-number position. Your final avatar is now unlocked.`;
-      feedback.className = 'feedback good';
-      toast('Final sweep complete. Exit pass cleared. Avatar unlocked!');
-      saveState();
-      showAvatarShowcase(true);
-      showReport(false);
-    }
-
-
-
-    function determineAvatarLevel() {
-      const { total } = calculateScores();
-      const badgeCount = state.earnedBadges.size;
-      const rapid = state.earnedBadges.has('rapid');
-      const deadline = state.earnedBadges.has('deadline');
-      if (badgeCount === 6 && rapid && total >= 7) return 'legendary';
-      if (badgeCount === 6 && rapid) return 'speedster';
-      if (deadline || total >= 7) return 'elite';
-      if (total >= 5) return 'junior';
-      return 'novice';
-    }
-
-    function beaverAvatarSvg(level) {
-      const extras = {
-        novice: `
-          <path d="M115 252h130v38H115z" fill="#141b25" opacity=".95"/>
-          <path d="M126 252l20-24h68l20 24" fill="#1b2430" stroke="currentColor" stroke-width="4"/>
-          <rect x="135" y="256" width="90" height="50" rx="7" fill="#0a1018" stroke="#657384" stroke-width="3"/>
-          <path d="M176 274h9v9h-9z" fill="currentColor" opacity=".7"/>
-          <path d="M180 271v15" stroke="currentColor" stroke-width="3"/>
-        `,
-        junior: `
-          <path d="M116 250h128l18 58H98z" fill="#14100a" stroke="currentColor" stroke-width="4"/>
-          <path d="M118 184h124l-12 35H130z" fill="#1d1408" stroke="currentColor" stroke-width="4"/>
-          <rect x="128" y="190" width="46" height="21" rx="9" fill="#291909" stroke="currentColor" stroke-width="3"/>
-          <rect x="186" y="190" width="46" height="21" rx="9" fill="#291909" stroke="currentColor" stroke-width="3"/>
-          <path d="M174 200h12" stroke="currentColor" stroke-width="4"/>
-          <path d="M140 200h22M198 200h22" stroke="#ffe2a3" stroke-width="3" opacity=".75"/>
-        `,
-        elite: `
-          <path d="M112 248h136l16 61H96z" fill="#07131f" stroke="currentColor" stroke-width="4"/>
-          <path d="M122 184h116l-7 36H129z" fill="#071824" stroke="currentColor" stroke-width="4"/>
-          <path d="M133 190h37l-6 22h-37zM190 190h37l6 22h-37z" fill="currentColor" opacity=".78"/>
-          <path d="M170 201h20" stroke="#d7fbff" stroke-width="4"/>
-          <path d="M105 269l34-17M255 269l-34-17" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
-        `,
-        speedster: `
-          <path d="M104 251h152l18 57H86z" fill="#110b20" stroke="currentColor" stroke-width="4"/>
-          <path d="M122 183h116l-7 37H129z" fill="#160d29" stroke="currentColor" stroke-width="4"/>
-          <path d="M129 191h42l-8 21h-39zM189 191h42l5 21h-39z" fill="#27143d" stroke="#f0dfff" stroke-width="2"/>
-          <path d="M171 201h18" stroke="currentColor" stroke-width="4"/>
-          <path d="M73 261l25-11-13 23 24-6-34 31 11-22-21 3z" fill="currentColor" opacity=".85"/>
-          <path d="M287 228a31 31 0 1 1-1 0z" fill="none" stroke="currentColor" stroke-width="4" opacity=".8"/>
-          <path d="M287 239v20l13 8" stroke="currentColor" stroke-width="4"/>
-        `,
-        legendary: `
-          <path d="M100 250h160l18 58H82z" fill="#171006" stroke="currentColor" stroke-width="5"/>
-          <path d="M121 183h118l-8 37H129z" fill="#211707" stroke="currentColor" stroke-width="4"/>
-          <path d="M130 191h40l-6 21h-39zM190 191h40l5 21h-39z" fill="#5b3b08" stroke="#fff0ae" stroke-width="2"/>
-          <path d="M171 201h18" stroke="currentColor" stroke-width="4"/>
-          <path d="M132 100l18-30 26 22 22-35 23 35 28-21 15 31z" fill="currentColor" opacity=".92" stroke="#fff3b5" stroke-width="3"/>
-          <circle cx="198" cy="74" r="6" fill="#fff3b5"/>
-          <path d="M283 155l25 12v18c0 24-12 41-25 49-13-8-25-25-25-49v-18z" fill="#2b1b06" stroke="currentColor" stroke-width="4"/>
-          <path d="M273 188l8 8 14-20" fill="none" stroke="#fff0a9" stroke-width="5"/>
-        `
-      };
-      return `
-        <svg viewBox="0 0 360 330" role="img" aria-label="${AVATAR_LEVELS[level].title} cyber beaver avatar">
-          <defs>
-            <filter id="glow-${level}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-            <linearGradient id="fur-${level}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8e5e3c"/><stop offset=".55" stop-color="#6b432b"/><stop offset="1" stop-color="#3c251c"/></linearGradient>
-          </defs>
-          <circle cx="180" cy="158" r="122" fill="currentColor" opacity=".055"/>
-          <path d="M36 66h58M266 66h58M47 89h30M283 89h30M35 237h52M273 237h52" stroke="currentColor" stroke-width="3" opacity=".35"/>
-          <path d="M69 278c-34-14-39-42-22-64 17-22 47-12 63 7-19 12-26 31-24 56z" fill="#65432d" stroke="#2a1a13" stroke-width="4"/>
-          <path d="M58 238l40 24M55 250l37 22M67 224l36 28" stroke="#2e2119" stroke-width="3" opacity=".6"/>
-          <ellipse cx="180" cy="279" rx="84" ry="42" fill="#3a261d"/>
-          <circle cx="117" cy="132" r="28" fill="#6b432b" stroke="#2f1c15" stroke-width="5"/>
-          <circle cx="243" cy="132" r="28" fill="#6b432b" stroke="#2f1c15" stroke-width="5"/>
-          <circle cx="117" cy="132" r="13" fill="#a7744c" opacity=".65"/>
-          <circle cx="243" cy="132" r="13" fill="#a7744c" opacity=".65"/>
-          <path d="M107 151c3-57 35-91 73-91 47 0 79 37 74 98-3 42-28 80-74 80-46 0-77-36-73-87z" fill="url(#fur-${level})" stroke="#2a1a14" stroke-width="5"/>
-          <path d="M122 129c10-40 34-59 61-59 33 0 58 21 64 62-15-13-31-16-45-12-16 4-29 3-43-3-13-6-25-2-37 12z" fill="#9a6844" opacity=".55"/>
-          <ellipse cx="154" cy="158" rx="9" ry="11" fill="#090b0e"/>
-          <ellipse cx="208" cy="158" rx="9" ry="11" fill="#090b0e"/>
-          <circle cx="151" cy="154" r="2.6" fill="#fff"/><circle cx="205" cy="154" r="2.6" fill="#fff"/>
-          <ellipse cx="181" cy="183" rx="33" ry="24" fill="#c49367"/>
-          <path d="M166 178c7-8 23-8 30 0-2 11-9 16-15 16-7 0-13-5-15-16z" fill="#20130f"/>
-          <path d="M181 193v11" stroke="#24150f" stroke-width="4"/>
-          <path d="M181 204c-10 11-20 13-31 5M181 204c10 11 20 13 31 5" fill="none" stroke="#24150f" stroke-width="3" stroke-linecap="round"/>
-          <path d="M169 207h12v25h-14c-4-10-2-18 2-25zM181 207h12c4 7 6 15 2 25h-14z" fill="#f7ead2" stroke="#a9977f" stroke-width="2"/>
-          <path d="M142 179l-24-5M140 187l-27 2M220 179l24-5M222 187l27 2" stroke="#d7aa7d" stroke-width="2.5" stroke-linecap="round"/>
-          ${extras[level] || extras.novice}
-          <circle cx="180" cy="162" r="132" fill="none" stroke="currentColor" stroke-width="2" opacity=".2" filter="url(#glow-${level})"/>
-        </svg>`;
-    }
-
-    function renderAvatarBadges() {
-      const vault = document.getElementById('avatarBadgeShowcase');
-      if (!vault) return;
-      vault.innerHTML = '';
-      Object.entries(BADGES).forEach(([id, badge]) => {
-        const source = document.getElementById(`badge-${id}`);
-        const card = document.createElement('div');
-        const earned = state.earnedBadges.has(id);
-        card.className = `showcase-badge${earned ? ' earned' : ''}`;
-        if (source) card.innerHTML = source.innerHTML;
-        else card.innerHTML = `<div class="badge-emblem"></div><div><div class="badge-name">${badge.label}</div><div class="badge-status">${earned ? 'EARNED' : 'LOCKED'}</div></div>`;
-        const status = card.querySelector('.badge-status');
-        if (status) status.textContent = earned ? 'EARNED' : 'LOCKED';
-        vault.appendChild(card);
-      });
-    }
-
-    function showAvatarShowcase(scroll = true) {
-      if (!state.exitPassCompleted) return;
-      updateBadges(true);
-      const { total } = calculateScores();
-      const level = determineAvatarLevel();
-      const profile = AVATAR_LEVELS[level];
-      const section = document.getElementById('avatarReveal');
-      section.className = `avatar-reveal show avatar-${level}`;
-      document.getElementById('avatarLevelPill').textContent = profile.tier;
-      document.getElementById('avatarName').textContent = profile.title;
-      document.getElementById('avatarCodename').textContent = `Codename: ${profile.codename}`;
-      document.getElementById('avatarGraphic').innerHTML = beaverAvatarSvg(level);
-      document.getElementById('avatarMessage').innerHTML = `<strong>${profile.codename} unlocked.</strong> ${profile.message}`;
-      document.getElementById('avatarBadgeCount').textContent = `${state.earnedBadges.size} / 6`;
-      document.getElementById('avatarScore').textContent = `${total} / 8`;
-      document.getElementById('avatarTime').textContent = state.completionElapsedSeconds === null ? '--:--' : formatDuration(state.completionElapsedSeconds);
-      document.getElementById('avatarCriteria').innerHTML = `<b>Why you received this avatar:</b> ${profile.criteria}`;
-      renderAvatarBadges();
-      if (scroll) setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
-    }
-
-    function calculateScores() {
-      const loScores = {};
-      const loTotals = {};
-      Object.entries(QUESTION_BANK).forEach(([qid, q]) => {
-        loTotals[q.lo] = (loTotals[q.lo] || 0) + 1;
-        loScores[q.lo] = (loScores[q.lo] || 0) + (state.firstCorrect[qid] ? 1 : 0);
-      });
-      const total = Object.values(state.firstCorrect).filter(Boolean).length;
-      return { total, loScores, loTotals };
-    }
-
-    function showReport(scroll = true) {
-      const { total, loScores, loTotals } = calculateScores();
-      const report = document.getElementById('report');
-      report.classList.add('show');
-      document.getElementById('scoreText').textContent = `${total}/8`;
-      document.getElementById('scoreRing').style.setProperty('--score-angle', `${(total / 8) * 360}deg`);
-
-      let rank = 'Network Trainee';
-      let message = 'You restored the system through correction. Review the objectives where your first attempt was uncertain.';
-      if (total >= 7) { rank = 'Lead Cyber Analyst'; message = 'You decoded the sequence evidence accurately on the first attempt.'; }
-      else if (total >= 5) { rank = 'Incident Responder'; message = 'You have a secure foundation. One focused review will strengthen your sequence reasoning.'; }
-      document.getElementById('rankTitle').textContent = rank;
-      document.getElementById('rankMessage').textContent = message;
-
-      const name = document.getElementById('studentName').value.trim() || 'Unnamed investigator';
-      const cls = document.getElementById('studentClass').value.trim();
-      document.getElementById('reportIdentity').textContent = `${name}${cls ? ' - ' + cls : ''}`;
-
-      const masteryGrid = document.getElementById('masteryGrid');
-      masteryGrid.innerHTML = '';
-      Object.keys(LO_LABELS).forEach(lo => {
-        const card = document.createElement('div');
-        card.className = 'mastery-card';
-        card.innerHTML = `<b>${loScores[lo] || 0}/${loTotals[lo]}</b><span>${LO_LABELS[lo]}</span>`;
-        masteryGrid.appendChild(card);
-      });
-
-      const weakest = Object.keys(LO_LABELS).sort((a, b) => ((loScores[a] || 0) / loTotals[a]) - ((loScores[b] || 0) / loTotals[b]))[0];
-      const advice = {
-        LO1: 'State the common difference before predicting the next term.',
-        LO2: 'Use “difference x n + adjustment”, then test n = 1.',
-        LO3: 'Expand the bracket carefully and collect the constant terms.',
-        LO4: 'Substitute the required position directly into the nth term.',
-        LO5: 'Explain how the rule avoids listing or drawing every earlier stage.'
-      };
-      const cyberNote = state.trapOutcome === 'safe'
-        ? '<br><strong>Cyber checkpoint:</strong> You resisted the suspicious download and let the threat expire.'
-        : state.trapOutcome === 'clicked'
-          ? '<br><strong>Cyber checkpoint:</strong> You clicked the simulated Trojan link. Next time, verify unexpected downloads before opening them.'
-          : '';
-      if (total === 8) {
-        document.getElementById('nextStep').innerHTML = '<strong>All objectives secure:</strong> You also used an nth term backwards in the Ghost Packet exit pass to test sequence membership.' + cyberNote;
-      } else {
-        document.getElementById('nextStep').innerHTML = `<strong>Recommended focus - ${weakest}:</strong> ${advice[weakest]}` + cyberNote;
-      }
-      if (scroll) setTimeout(() => report.scrollIntoView({ behavior: 'smooth', block: 'start' }), 350);
-    }
-
-    function getCurrentAnswers() {
-      const answers = {};
-      Object.entries(QUESTION_BANK).forEach(([qid, q]) => { answers[qid] = getValue(qid, q); });
-      return answers;
-    }
-
-    function restoreAnswers(answers) {
-      Object.entries(answers || {}).forEach(([qid, value]) => {
-        const q = QUESTION_BANK[qid];
-        if (!q || value === '') return;
-        if (q.type === 'radio') {
-          const input = document.querySelector(`input[name="${qid}"][value="${CSS.escape(String(value))}"]`);
-          if (input) input.checked = true;
-        } else {
-          const input = document.getElementById(qid);
-          if (input) input.value = value;
-        }
-      });
-    }
-
-    function copySummary() {
-      const { total, loScores, loTotals } = calculateScores();
-      const name = document.getElementById('studentName').value.trim() || 'Unnamed investigator';
-      const cls = document.getElementById('studentClass').value.trim();
-      const badges = [...state.earnedBadges].map(id => BADGES[id].label);
-      const lines = [
-        'PLD Lockdown: Code Black - Assessment Summary',
-        `Student: ${name}${cls ? ' | Class: ' + cls : ''}`,
-        `First-attempt score: ${total}/8`,
-        ...Object.keys(LO_LABELS).map(lo => `${lo} ${LO_LABELS[lo]}: ${loScores[lo] || 0}/${loTotals[lo]}`),
-        `Badges: ${badges.join(', ') || 'None yet'}`,
-        `Completion time: ${state.completionElapsedSeconds === null ? 'Not completed' : formatDuration(state.completionElapsedSeconds)}`,
-        `Final result: ${state.solved ? 'Override accepted' : 'Not yet completed'}`,
-        `Suspicious-link checkpoint: ${state.trapOutcome === 'safe' ? 'Waited - threat expired safely' : state.trapOutcome === 'clicked' ? 'Clicked - simulated Trojan triggered' : 'Not yet reached'}`,
-        `Exit pass: ${state.exitPassCompleted ? 'Cleared' : 'Not yet cleared'}`,
-        `Final avatar: ${state.exitPassCompleted ? AVATAR_LEVELS[determineAvatarLevel()].title + ' - ' + AVATAR_LEVELS[determineAvatarLevel()].codename : 'Not yet assigned'}`
-      ];
-      navigator.clipboard.writeText(lines.join('\n')).then(() => toast('Assessment summary copied.')).catch(() => toast('Copy was blocked by the browser. Use Print instead.'));
-    }
-
-    function formatDuration(totalSeconds) {
-      const safe = Math.max(0, Number(totalSeconds) || 0);
-      const minutes = Math.floor(safe / 60).toString().padStart(2, '0');
-      const seconds = Math.floor(safe % 60).toString().padStart(2, '0');
-      return `${minutes}:${seconds}`;
-    }
-
-    function syncTimerFromClock() {
-      if (!state.timerStartedAtMs || !state.timerDeadlineMs) return;
-      const referenceMs = state.solved && state.timerStoppedAtMs ? state.timerStoppedAtMs : Date.now();
-      state.timerSeconds = Math.max(0, Math.ceil((state.timerDeadlineMs - referenceMs) / 1000));
-      updateTimer();
-    }
-
-    function updateTimer() {
-      const el = document.getElementById('timer');
-      el.textContent = formatDuration(state.timerSeconds);
-      el.style.color = state.timerSeconds <= 300 ? '#ff8193' : 'white';
-      document.getElementById('timerCard').classList.toggle('expired', state.timerSeconds <= 0 && !state.solved);
-      const status = document.getElementById('timerStateText');
-      if (state.solved) {
-        status.textContent = `System restored in ${formatDuration(state.completionElapsedSeconds)}. Countdown locked.`;
-      } else if (state.timerSeconds <= 0) {
-        status.textContent = 'Countdown expired. Continue to complete the learning investigation.';
-      } else {
-        status.textContent = 'Auto-started. Reloading preserves this attempt.';
-      }
-    }
-
-    function stopTimerInterval() {
-      clearInterval(state.timerHandle);
-      state.timerHandle = null;
-      state.timerRunning = false;
-    }
-
-    function startTimer() {
-      if (state.timerRunning || state.solved) return;
-      state.timerRunning = true;
-      syncTimerFromClock();
-      state.timerHandle = setInterval(() => {
-        const previous = state.timerSeconds;
-        syncTimerFromClock();
-        if (!state.fiveMinuteWarningShown && previous > 300 && state.timerSeconds <= 300 && state.timerSeconds > 0) {
-          state.fiveMinuteWarningShown = true;
-          toast('Five minutes remain before the simulated wipe window closes.');
-          saveState();
-        }
-        if (state.timerSeconds <= 0) {
-          stopTimerInterval();
-          toast('Countdown expired. Continue the investigation; the timer will remain at 00:00.');
-          saveState();
-        }
-      }, 500);
-    }
-
-    function initialiseSession() {
-      const now = Date.now();
-      if (!state.overrideCode || state.overrideCode.length !== 8) state.overrideCode = generateOverrideCode();
-      if (!state.exitChallenge) state.exitChallenge = generateExitChallenge();
-      if (!state.timerStartedAtMs || !state.timerDeadlineMs) {
-        state.timerStartedAtMs = now;
-        state.timerDeadlineMs = state.timerStartedAtMs + TOTAL_SECONDS * 1000;
-        state.timerStoppedAtMs = null;
-        state.completionElapsedSeconds = null;
-      }
-      updateCodeRail();
-      renderExitChallenge();
-      saveState();
-      syncTimerFromClock();
-      if (!state.solved && state.timerSeconds > 0) startTimer();
-    }
-
-    function startNewInvestigation() {
-      if (!state.exitPassCompleted) return;
-      try {
-        localStorage.removeItem(STORAGE_KEY);
-        LEGACY_STORAGE_KEYS.forEach(key => localStorage.removeItem(key));
-      } catch (error) { /* Storage may be unavailable. */ }
-      window.location.reload();
-    }
-
-    function toast(message) {
-      const el = document.getElementById('toast');
-      el.textContent = message;
-      el.classList.add('show');
-      clearTimeout(el._timer);
-      el._timer = setTimeout(() => el.classList.remove('show'), 3200);
-    }
-
-    function saveState() {
-      const data = {
-        completedStations: [...state.completedStations],
-        verifiedQuestions: [...state.verifiedQuestions],
-        attempted: state.attempted,
-        firstCorrect: state.firstCorrect,
-        earnedBadges: [...state.earnedBadges],
-        selectedSuspect: state.selectedSuspect,
-        codeAccepted: state.codeAccepted,
-        solved: state.solved,
-        answers: getCurrentAnswers(),
-        finalCode: document.getElementById('finalCode').value,
-        name: document.getElementById('studentName').value,
-        className: document.getElementById('studentClass').value,
-        timerStartedAtMs: state.timerStartedAtMs,
-        timerDeadlineMs: state.timerDeadlineMs,
-        timerStoppedAtMs: state.timerStoppedAtMs,
-        completionElapsedSeconds: state.completionElapsedSeconds,
-        fiveMinuteWarningShown: state.fiveMinuteWarningShown,
-        overrideCode: state.overrideCode,
-        trapStartedAtMs: state.trapStartedAtMs,
-        trapOutcome: state.trapOutcome,
-        trapOutcomeAtMs: state.trapOutcomeAtMs,
-        trapModalDismissed: state.trapModalDismissed,
-        exitChallenge: state.exitChallenge,
-        exitSelection: state.exitSelection,
-        exitPassCompleted: state.exitPassCompleted,
-        exitPosition: document.getElementById('exitPosition').value,
-        exitReason: (document.querySelector('input[name="exitReason"]:checked') || {}).value || ''
-      };
-      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (error) { /* Storage may be unavailable. */ }
-    }
-
-    function restoreState() {
-      let raw = null;
-      try { raw = localStorage.getItem(STORAGE_KEY); } catch (error) { return; }
-      if (!raw) return;
-      try {
-        const data = JSON.parse(raw);
-        state.overrideCode = typeof data.overrideCode === 'string' ? data.overrideCode : '';
-        state.trapStartedAtMs = Number(data.trapStartedAtMs) || null;
-        state.trapOutcome = (data.trapOutcome === 'safe' || data.trapOutcome === 'clicked') ? data.trapOutcome : null;
-        state.trapOutcomeAtMs = Number(data.trapOutcomeAtMs) || null;
-        state.trapModalDismissed = Boolean(data.trapModalDismissed);
-        state.exitChallenge = data.exitChallenge || null;
-        state.exitSelection = data.exitSelection || null;
-        state.exitPassCompleted = Boolean(data.exitPassCompleted);
-        if (state.exitPassCompleted) state.trapModalDismissed = true;
-        state.attempted = data.attempted || {};
-        state.firstCorrect = data.firstCorrect || {};
-        state.verifiedQuestions = new Set(data.verifiedQuestions || []);
-        state.earnedBadges = new Set(data.earnedBadges || []);
-        state.codeAccepted = Boolean(data.codeAccepted);
-        state.solved = Boolean(data.solved);
-        state.timerStartedAtMs = Number(data.timerStartedAtMs) || null;
-        state.timerDeadlineMs = Number(data.timerDeadlineMs) || null;
-        state.timerStoppedAtMs = Number(data.timerStoppedAtMs) || null;
-        state.completionElapsedSeconds = (data.completionElapsedSeconds === null || data.completionElapsedSeconds === undefined) ? null : Number(data.completionElapsedSeconds);
-        state.fiveMinuteWarningShown = Boolean(data.fiveMinuteWarningShown);
-        document.getElementById('studentName').value = data.name || '';
-        document.getElementById('studentClass').value = data.className || '';
-        document.getElementById('finalCode').value = data.finalCode || '';
-        document.getElementById('exitPosition').value = data.exitPosition || '';
-        if (data.exitReason) {
-          const reason = document.querySelector(`input[name="exitReason"][value="${CSS.escape(String(data.exitReason))}"]`);
-          if (reason) reason.checked = true;
-        }
-        restoreAnswers(data.answers || {});
-        (data.completedStations || []).forEach(n => completeStation(Number(n), true));
-        if (data.selectedSuspect) {
-          const btn = document.querySelector(`[data-suspect="${data.selectedSuspect}"]`);
-          if (btn) selectSuspect(data.selectedSuspect, btn, false);
-        }
-        if (state.codeAccepted && !state.solved) showOutcome('wrongSuspectOutcome');
-        if (state.solved) {
-          document.getElementById('successCode').textContent = state.overrideCode || '--------';
-          showOutcome('successOutcome');
-          document.getElementById('finalFeedback').textContent = state.exitPassCompleted ? 'Investigation complete. Final report generated.' : 'Override accepted. Complete the cyber-awareness checkpoint and Part 2.';
-          document.getElementById('finalFeedback').className = 'feedback good';
-          showTrapGate(false);
-          if (state.trapOutcome) {
-            if (state.trapModalDismissed) showExitPass(false);
-            else showTrapOutcomeModal(false);
-          }
-          if (state.exitPassCompleted) {
-            showAvatarShowcase(false);
-            showReport(false);
-          }
-        }
-        state.verifiedQuestions.forEach(qid => {
-          const box = document.querySelector(`[data-q="${qid}"]`);
-          const fb = document.getElementById(`fb-${qid}`);
-          if (box && fb) {
-            box.classList.add('correct');
-            fb.textContent = `Verified. Override character ${qid.slice(1)} unlocked.`;
-            fb.classList.add('good');
-          }
-        });
-        updateCodeRail();
-        updateBadges(true);
-      } catch (error) {
-        try { localStorage.removeItem(STORAGE_KEY); } catch (storageError) { /* ignore */ }
-      }
-    }
-
-
-    mountTrapOutcomeScreen();
-    initialiseQuestionHints();
-    document.getElementById('exitHintToggle').addEventListener('click', event => {
-      const button = event.currentTarget;
-      const panel = document.getElementById('exitHintPanel');
-      const open = button.getAttribute('aria-expanded') !== 'true';
-      button.setAttribute('aria-expanded', open ? 'true' : 'false');
-      button.textContent = open ? '💡 Hide exit-pass hint' : '💡 Need an exit-pass hint?';
-      panel.hidden = !open;
+      <div class="qblock" id="block-q12b">
+        <div class="qtag"><span>🔢 Clue 4b</span></div>
+        <p class="qprompt">Using T<sub>n</sub> = 6n + 4, how many chairs are in Row 15?</p>
+        <div class="numeric-row">
+          T<sub>15</sub> = <input type="text" inputmode="numeric" id="q12b-ans" placeholder="answer">
+          <button class="check-btn" data-check="numeric" data-qid="q12b" data-ans="94">Check</button>
+        </div>
+        <div class="feedback" id="fb-q12b"></div>
+      </div>
+
+      <div class="qblock thinking" id="block-q13">
+        <div class="qtag"><span class="think-flag">💭 THINK</span>Clue 4c</div>
+        <p class="qprompt">Why is using the formula faster than counting chairs row by row, all the way to Row 15?</p>
+        <div class="mcq-options">
+          <button class="opt-btn" data-qid="q13" data-correct="false">It isn't faster — counting is easier</button>
+          <button class="opt-btn" data-qid="q13" data-correct="true">The formula gives the answer with one substitution, instead of adding row after row</button>
+          <button class="opt-btn" data-qid="q13" data-correct="false">The formula only works for small rows</button>
+        </div>
+        <div class="feedback" id="fb-q13"></div>
+      </div>
+
+      <div class="qblock" id="block-q14">
+        <div class="qtag"><span>🔢 Clue 4d</span></div>
+        <p class="qprompt">Using T<sub>n</sub> = 6n + 4, how many chairs are needed for 25 rows?</p>
+        <div class="numeric-row">
+          T<sub>25</sub> = <input type="text" inputmode="numeric" id="q14-ans" placeholder="answer">
+          <button class="check-btn" data-check="numeric" data-qid="q14" data-ans="154">Check</button>
+        </div>
+        <div class="feedback" id="fb-q14"></div>
+      </div>
+
+    </div>
+    <div class="continue-wrap"><button class="big-btn" id="continue4" disabled>Continue Investigation →</button><div class="hint-note">Answer every clue above to unlock the final scene.</div></div>
+  </div>
+</div>
+
+<!-- STAGE 5: TWIST -->
+<div class="screen" id="screen-stage5">
+  <div class="screen-inner">
+    <div class="stage-label">Clue 5 of 5 · The Final Clue</div>
+    <h2 class="stage-title">The Alibi</h2>
+    <div class="flavor-text">You've tracked the trail to the Head Prefect, who was seen near the display case. When questioned, they say: <em>"I couldn't have taken it — I was setting up chairs the whole time. I arranged exactly 100 chairs, following the pattern 9, 15, 21, 27, ... by the time the bell rang."</em> Something about that number feels checkable.</div>
+    <div class="qgrid">
+
+      <div class="qblock thinking" id="block-q15">
+        <div class="qtag"><span class="think-flag">💭 THINK</span>The Alibi Check</div>
+        <p class="qprompt">The pattern is 9, 15, 21, 27, ... (T<sub>n</sub> = 6n + 3). Is 100 an achievable term in this sequence?</p>
+        <div class="mcq-options">
+          <button class="opt-btn" data-qid="q15" data-correct="false">Yes, 100 fits the pattern</button>
+          <button class="opt-btn" data-qid="q15" data-correct="true">No — solving 6n + 3 = 100 gives n = 16.17, not a whole number</button>
+        </div>
+        <div class="feedback" id="fb-q15"></div>
+      </div>
+
+      <div class="qblock thinking" id="block-q16">
+        <div class="qtag"><span class="think-flag">💭 THINK</span>The Verdict</div>
+        <p class="qprompt">What does this tell you about the Head Prefect's story?</p>
+        <div class="mcq-options">
+          <button class="opt-btn" data-qid="q16" data-correct="false">It confirms the alibi is true</button>
+          <button class="opt-btn" data-qid="q16" data-correct="true">The alibi is mathematically impossible — the story doesn't add up</button>
+          <button class="opt-btn" data-qid="q16" data-correct="false">It doesn't tell us anything useful</button>
+        </div>
+        <div class="feedback" id="fb-q16"></div>
+      </div>
+
+    </div>
+    <div class="continue-wrap"><button class="big-btn" id="continue5" disabled>Reveal the Truth →</button></div>
+  </div>
+</div>
+
+<!-- OUTRO / REVEAL -->
+<div class="screen" id="screen-outro">
+  <div class="screen-inner">
+    <div class="badge-icon">🎉</div>
+    <div class="eyebrow">Case closed</div>
+    <h2 class="stage-title">The Truth Comes Out</h2>
+    <div class="reveal-card">
+      <p>The Head Prefect's story didn't add up — because they made it up to cover for someone else. Under a little more pressure, they crack: the Founder's Day Cup was never stolen at all. The <strong>Math Club</strong> "borrowed" it for their annual Founder's Day puzzle hunt tradition, hiding it and scattering number-pattern clues across the school for anyone sharp enough to follow.</p>
+      <p style="margin-top:0.8rem;">The Cup is exactly where it always was — behind a false panel in the trophy case, right where the first clue was hiding a locker key to prove it. Case closed, no harm done, and you cracked every clue along the way.</p>
+    </div>
+    <div class="continue-wrap"><button class="big-btn" id="continueToResults">See My Case File →</button></div>
+  </div>
+</div>
+
+<!-- RESULTS: CASE FILE -->
+<div class="screen" id="screen-results">
+  <div class="screen-inner">
+    <div class="case-file">
+      <div class="case-stamp">CASE CLOSED</div>
+      <div class="cf-label">Founder's Day Mystery — Investigation Report</div>
+      <h2>Case File</h2>
+      <div class="cf-name" id="cfName">Detective ___</div>
+      <div class="cf-score-row"><span class="big-score" id="cfScore">0 / 18</span><span>clues cracked</span></div>
+      <div class="cf-rank" id="cfRank">Rookie Detective 🔍</div>
+      <div class="cf-log" id="cfLog"></div>
+      <div class="cf-closing">Every good detective double-checks their working. If any clue tripped you up, it's worth revisiting the Number Sequences workbook before the next case.</div>
+    </div>
+    <div class="screenshot-note">📸 Screenshot this case file to compare with your fellow detectives.</div>
+  </div>
+</div>
+
+<script>
+  const STAGE_QIDS = {
+    1: ['q1','q2','q3','q4'],
+    2: ['q5','q6','q7','q8'],
+    3: ['q9','q10a','q10b','q11'],
+    4: ['q12a','q12b','q13','q14'],
+    5: ['q15','q16']
+  };
+  const ALL_QIDS = Object.values(STAGE_QIDS).flat();
+  const TOTAL = ALL_QIDS.length;
+  const state = {};
+  ALL_QIDS.forEach(q => state[q] = {done:false, correct:false});
+
+  const screens = ['intro','stage1','stage2','stage3','stage4','stage5','outro','results'];
+  let currentScreen = 'intro';
+  let playerName = 'Detective';
+  let timerSeconds = 18*60;
+  let timerHandle = null;
+  const STORAGE_KEY = 'numseq-game-progress-v1';
+
+  function showScreen(name){
+    screens.forEach(s => document.getElementById('screen-'+s).classList.toggle('active', s === name));
+    currentScreen = name;
+    saveProgress();
+  }
+
+  // Shuffle MCQ options on every render
+  document.querySelectorAll('.mcq-options').forEach(group=>{
+    const btns = Array.from(group.children);
+    for(let i=btns.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [btns[i],btns[j]] = [btns[j],btns[i]];
+    }
+    btns.forEach(b=>group.appendChild(b));
+  });
+
+  // Build stage progress dots
+  const hudStages = document.getElementById('hudStages');
+  for(let i=1;i<=5;i++){
+    const dot = document.createElement('div');
+    dot.className = 'hud-stage-dot';
+    dot.dataset.stage = i;
+    dot.textContent = i;
+    hudStages.appendChild(dot);
+  }
+  function updateHudStages(){
+    const stageIdx = currentScreen.startsWith('stage') ? parseInt(currentScreen.replace('stage','')) : (currentScreen==='outro'||currentScreen==='results' ? 6 : 0);
+    document.querySelectorAll('.hud-stage-dot').forEach(dot=>{
+      const n = parseInt(dot.dataset.stage);
+      const allDone = STAGE_QIDS[n].every(q=>state[q].done);
+      dot.classList.toggle('complete', allDone);
+      dot.classList.toggle('active', n === stageIdx);
     });
+  }
 
-    document.querySelectorAll('[data-check-station]').forEach(btn => btn.addEventListener('click', () => checkStation(Number(btn.dataset.checkStation))));
-    document.querySelectorAll('.suspect-choice').forEach(btn => btn.addEventListener('click', () => selectSuspect(btn.dataset.suspect, btn)));
-    document.getElementById('submitFinal').addEventListener('click', submitFinal);
-    document.getElementById('suspiciousLink').addEventListener('click', triggerTrojanSimulation);
-    document.getElementById('trapContinueBtn').addEventListener('click', continueFromTrapModal);
-    document.addEventListener('pointerdown', primeTrapAudio, { passive: true });
-    document.addEventListener('keydown', primeTrapAudio, { passive: true });
-    document.getElementById('finalCode').addEventListener('input', event => {
-      const cleaned = normaliseCode(event.target.value).slice(0, 8);
-      if (event.target.value !== cleaned) event.target.value = cleaned;
-      saveState();
-    });
-    document.getElementById('copySummary').addEventListener('click', copySummary);
-    document.getElementById('newInvestigation').addEventListener('click', startNewInvestigation);
-    document.querySelectorAll('[data-exit-option]').forEach(button => button.addEventListener('click', () => selectExitOption(button.dataset.exitOption)));
-    document.getElementById('checkExitPass').addEventListener('click', checkExitPass);
-    document.getElementById('exitPosition').addEventListener('input', saveState);
-    document.querySelectorAll('input[name="exitReason"]').forEach(input => input.addEventListener('change', saveState));
-    document.querySelectorAll('input').forEach(input => {
-      input.addEventListener(input.type === 'radio' ? 'change' : 'input', saveState);
-    });
+  function checkStageComplete(stageNum){
+    const allDone = STAGE_QIDS[stageNum].every(q => state[q].done);
+    const btn = document.getElementById('continue'+stageNum);
+    if(btn) btn.disabled = !allDone;
+    updateHudStages();
+    saveProgress();
+  }
 
-    restoreState();
-    initialiseSession();
-    updateCodeRail();
-    updateBadges(true);
-  </script>
+  function markResult(qid, correct){
+    state[qid].done = true;
+    state[qid].correct = correct;
+    const block = document.getElementById('block-'+qid);
+    if(block) block.classList.add('solved');
+    for(const [stage, qids] of Object.entries(STAGE_QIDS)){
+      if(qids.includes(qid)){ checkStageComplete(parseInt(stage)); break; }
+    }
+  }
+
+  // MCQ
+  document.querySelectorAll('.opt-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const qid = btn.dataset.qid;
+      if(state[qid].done) return;
+      const group = document.querySelectorAll(`.opt-btn[data-qid="${qid}"]`);
+      const fb = document.getElementById('fb-'+qid);
+      const isCorrect = btn.dataset.correct === 'true';
+      group.forEach(b=>{
+        b.disabled = true;
+        if(b.dataset.correct === 'true') b.classList.add('correct');
+        else if(b === btn) b.classList.add('incorrect');
+      });
+      if(fb){
+        fb.textContent = isCorrect ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted above.';
+        fb.className = 'feedback ' + (isCorrect ? 'good' : 'bad');
+      }
+      markResult(qid, isCorrect);
+    });
+  });
+
+  // Formula check
+  document.querySelectorAll('[data-check="formula"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const qid = btn.dataset.qid;
+      if(state[qid].done) return;
+      const dInput = document.getElementById(qid+'-d');
+      const cInput = document.getElementById(qid+'-c');
+      const fb = document.getElementById('fb-'+qid);
+      const dVal = parseInt(dInput.value, 10);
+      const cVal = parseInt(cInput.value, 10);
+      const expD = parseInt(btn.dataset.d, 10);
+      const expC = parseInt(btn.dataset.c, 10);
+      if(isNaN(dVal) || isNaN(cVal)){ fb.textContent = 'Fill in both boxes with a number first.'; fb.className = 'feedback bad'; return; }
+      const isCorrect = (dVal === expD && cVal === expC);
+      dInput.disabled = true; cInput.disabled = true; btn.disabled = true;
+      if(isCorrect){ fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; }
+      else { fb.textContent = `✗ Not quite — the correct expression was Tn = ${expD}n + (${expC}).`; fb.className = 'feedback bad'; }
+      markResult(qid, isCorrect);
+    });
+  });
+
+  // Numeric check
+  document.querySelectorAll('[data-check="numeric"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const qid = btn.dataset.qid;
+      if(state[qid].done) return;
+      const input = document.getElementById(qid+'-ans');
+      const fb = document.getElementById('fb-'+qid);
+      const val = parseFloat(input.value);
+      const exp = parseFloat(btn.dataset.ans);
+      if(isNaN(val)){ fb.textContent = 'Type a number first.'; fb.className = 'feedback bad'; return; }
+      const isCorrect = Math.abs(val - exp) < 0.01;
+      input.disabled = true; btn.disabled = true;
+      if(isCorrect){ fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; }
+      else { fb.textContent = `✗ Not quite — the correct answer was ${exp}.`; fb.className = 'feedback bad'; }
+      markResult(qid, isCorrect);
+    });
+  });
+
+  // Enter key
+  document.querySelectorAll('.formula-row input, .numeric-row input').forEach(inp=>{
+    inp.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter'){
+        const row = inp.closest('.formula-row, .numeric-row');
+        const b = row.querySelector('.check-btn');
+        if(b) b.click();
+      }
+    });
+  });
+
+  // Navigation
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    const nameVal = document.getElementById('playerName').value.trim();
+    playerName = nameVal || 'Detective';
+    document.getElementById('hudName').textContent = playerName;
+    startTimer();
+    showScreen('stage1');
+    updateHudStages();
+  });
+  for(let i=1;i<=5;i++){
+    document.getElementById('continue'+i).addEventListener('click', ()=>{
+      if(i < 5) showScreen('stage'+(i+1));
+      else showScreen('outro');
+      updateHudStages();
+    });
+  }
+  document.getElementById('continueToResults').addEventListener('click', ()=>{
+    stopTimer();
+    renderResults();
+    showScreen('results');
+  });
+
+  // Timer
+  function startTimer(){
+    if(timerHandle) return;
+    timerHandle = setInterval(()=>{
+      timerSeconds--;
+      if(timerSeconds <= 0){
+        timerSeconds = 0;
+        updateTimerDisplay();
+        stopTimer();
+        stopAllInputs();
+        renderResults();
+        showScreen('results');
+        return;
+      }
+      updateTimerDisplay();
+      saveProgress();
+    }, 1000);
+    updateTimerDisplay();
+  }
+  function stopTimer(){ if(timerHandle){ clearInterval(timerHandle); timerHandle = null; } }
+  function updateTimerDisplay(){
+    const m = Math.floor(timerSeconds/60);
+    const s = timerSeconds%60;
+    const el = document.getElementById('hudTimer');
+    el.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    el.classList.toggle('urgent', timerSeconds <= 120);
+  }
+  function stopAllInputs(){
+    document.querySelectorAll('.opt-btn, .check-btn, .formula-row input, .numeric-row input').forEach(el=> el.disabled = true);
+  }
+
+  // Results rendering
+  function renderResults(){
+    let score = 0;
+    ALL_QIDS.forEach(q=>{ if(state[q].correct) score++; });
+    document.getElementById('cfName').textContent = playerName;
+    document.getElementById('cfScore').textContent = score + ' / ' + TOTAL;
+    let rank;
+    if(score >= 17) rank = 'Legendary Pattern Detective 🏆';
+    else if(score >= 13) rank = 'Ace Codebreaker 🧩';
+    else if(score >= 9) rank = 'Sharp-Eyed Investigator 🕵️';
+    else rank = 'Rookie Detective 🔍';
+    document.getElementById('cfRank').textContent = rank;
+
+    const stageNames = {1:'The Empty Display Case', 2:'Behind the Gym Lockers', 3:'The Vault Code', 4:'Ticket Trouble', 5:'The Alibi'};
+    const log = document.getElementById('cfLog');
+    log.innerHTML = '';
+    for(let i=1;i<=5;i++){
+      const qids = STAGE_QIDS[i];
+      const correctCount = qids.filter(q=>state[q].correct).length;
+      const row = document.createElement('div');
+      row.className = 'cf-log-item';
+      row.innerHTML = `<span class="tick">${correctCount === qids.length ? '✓' : correctCount}</span><span>${stageNames[i]} — ${correctCount}/${qids.length} clues correct</span>`;
+      log.appendChild(row);
+    }
+  }
+
+  // Persistence
+  function saveProgress(){
+    try{
+      const data = { playerName, timerSeconds, currentScreen, state, inputs:{} };
+      document.querySelectorAll('.formula-row input, .numeric-row input').forEach(inp=>{ data.inputs[inp.id] = inp.value; });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }catch(e){}
+  }
+  function restoreProgress(){
+    let raw;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){ return; }
+    if(!raw) return;
+    let data;
+    try{ data = JSON.parse(raw); }catch(e){ return; }
+    if(!data) return;
+    playerName = data.playerName || 'Detective';
+    document.getElementById('hudName').textContent = playerName;
+    document.getElementById('playerName').value = playerName;
+    timerSeconds = typeof data.timerSeconds === 'number' ? data.timerSeconds : timerSeconds;
+    if(data.inputs){
+      Object.keys(data.inputs).forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.value = data.inputs[id];
+      });
+    }
+    if(data.state){
+      ALL_QIDS.forEach(q=>{
+        if(data.state[q]){ state[q].done = !!data.state[q].done; state[q].correct = !!data.state[q].correct; }
+        if(state[q].done){
+          const block = document.getElementById('block-'+q);
+          if(block) block.classList.add('solved');
+          document.querySelectorAll(`.opt-btn[data-qid="${q}"]`).forEach(b=>{
+            b.disabled = true;
+            if(b.dataset.correct === 'true') b.classList.add('correct');
+          });
+          const row = block ? block.querySelector('.formula-row, .numeric-row') : null;
+          if(row){
+            row.querySelectorAll('input').forEach(i=>i.disabled=true);
+            const btn = row.querySelector('.check-btn'); if(btn) btn.disabled = true;
+          }
+          const fb = document.getElementById('fb-'+q);
+          if(fb){ fb.textContent = state[q].correct ? '✓ Correct!' : '✗ Recorded.'; fb.className = 'feedback ' + (state[q].correct ? 'good' : 'bad'); }
+        }
+      });
+    }
+    for(let i=1;i<=5;i++) checkStageComplete(i);
+    if(data.currentScreen && screens.includes(data.currentScreen)){
+      if(data.currentScreen !== 'intro'){ showScreen(data.currentScreen); if(!timerHandle && data.currentScreen.startsWith('stage')) startTimer(); }
+    }
+    if(data.currentScreen === 'results') renderResults();
+    updateHudStages();
+  }
+
+  document.getElementById('hudReset').addEventListener('click', ()=>{
+    if(!confirm('Start a brand new case? This will erase your current progress.')) return;
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+    location.reload();
+  });
+
+  restoreProgress();
+  updateTimerDisplay();
+</script>
 </body>
 </html>
