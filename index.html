@@ -24,7 +24,7 @@
   h1,h2,h3{ font-family:var(--font-display); line-height:1.1; letter-spacing:-0.01em; }
   p{ line-height:1.6; }
 
-  .screen{ display:none; min-height:100vh; min-height:100dvh; flex-direction:column; align-items:center; justify-content:center; padding:calc(56px + 5vh) 6vw 5vh; }
+  .screen{ display:none; min-height:100vh; min-height:100dvh; flex-direction:column; align-items:center; justify-content:center; padding:calc(56px + 5vh) 6vw 5vh; overflow-y:auto; }
   .screen.active{ display:flex; }
   .screen-inner{ max-width:760px; width:100%; }
 
@@ -57,17 +57,24 @@
   .eyebrow::before{ content:""; width:22px; height:2px; background:var(--gold); display:inline-block; }
   h1{ font-size:clamp(2.2rem,5.5vw,3.6rem); font-weight:700; margin-bottom:0.8rem; }
   .lede{ font-size:1.05rem; opacity:0.85; max-width:56ch; margin-bottom:1.6rem; }
-  .name-input-row{ display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.4rem; }
+  .name-input-row{ display:flex; gap:0.6rem; flex-wrap:wrap; margin-bottom:0.6rem; }
   .name-input-row input{
-    flex:1; min-width:220px; font-family:var(--font-body); font-size:1rem; padding:0.8rem 1rem; border-radius:10px;
+    flex:1; min-width:180px; font-family:var(--font-body); font-size:1rem; padding:0.8rem 1rem; border-radius:10px;
     border:1px solid var(--line); background:var(--ink-soft); color:var(--paper); min-height:48px;
   }
+  .session-row{ margin-bottom:1.4rem; }
+  .session-row input{ max-width:220px; }
+  .session-row .sr-label{ font-family:var(--font-mono); font-size:0.72rem; opacity:0.55; margin-bottom:0.4rem; }
   .big-btn{
     font-family:var(--font-mono); font-weight:700; font-size:0.95rem; background:var(--gold); color:var(--ink);
     border:none; border-radius:30px; padding:0.9rem 1.8rem; cursor:pointer; min-height:48px; touch-action:manipulation;
   }
   .big-btn:hover{ opacity:0.88; }
   .big-btn:disabled{ opacity:0.4; cursor:default; }
+  .ghost-btn{
+    font-family:var(--font-mono); font-weight:600; font-size:0.85rem; background:none; color:var(--paper);
+    border:1px solid var(--line); border-radius:30px; padding:0.7rem 1.4rem; cursor:pointer; touch-action:manipulation;
+  }
   .rules-list{ display:flex; flex-direction:column; gap:0.5rem; margin-top:1.6rem; font-size:0.88rem; opacity:0.8; }
   .rules-list div{ display:flex; gap:0.6rem; }
 
@@ -109,6 +116,7 @@
   .feedback{ font-size:0.85rem; font-weight:600; margin-top:0.5rem; min-height:1.2em; }
   .feedback.good{ color:var(--mint); }
   .feedback.bad{ color:#FF9C8F; }
+  .attempts-left{ font-family:var(--font-mono); font-size:0.7rem; opacity:0.5; margin-top:0.3rem; }
 
   .continue-wrap{ margin-top:1.8rem; text-align:center; }
   .continue-wrap .hint-note{ font-family:var(--font-mono); font-size:0.75rem; opacity:0.55; margin-top:0.6rem; }
@@ -138,6 +146,16 @@
   .cf-log-item .tick{ width:18px; height:18px; border-radius:50%; background:var(--mint); color:var(--ink); font-size:0.65rem; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; }
   .cf-closing{ font-size:0.9rem; opacity:0.85; border-top:1px dashed var(--line-light); padding-top:1rem; }
   .screenshot-note{ font-family:var(--font-mono); font-size:0.78rem; opacity:0.6; margin-top:1.4rem; text-align:center; }
+  .case-actions{ display:flex; gap:0.8rem; justify-content:center; margin-top:1.6rem; flex-wrap:wrap; }
+
+  /* ---------- Learning Gaps report ---------- */
+  .gap-card{ border:1px solid var(--line); border-radius:14px; padding:1.2rem 1.4rem; margin-bottom:1rem; background:var(--ink-soft); }
+  .gap-card.solid{ border-color:var(--mint); }
+  .gap-head{ font-family:var(--font-display); font-weight:700; font-size:1.05rem; display:flex; align-items:center; gap:0.6rem; margin-bottom:0.5rem; flex-wrap:wrap; }
+  .gap-count{ font-family:var(--font-mono); font-size:0.7rem; background:var(--coral); color:#fff; padding:0.2rem 0.6rem; border-radius:10px; font-weight:600; }
+  .gap-card p{ font-size:0.9rem; opacity:0.92; }
+  .gap-practice-inner{ margin-top:0.8rem; padding-top:0.8rem; border-top:1px dashed var(--line); }
+  .gap-pointer{ font-family:var(--font-mono); font-size:0.8rem; opacity:0.7; margin-top:0.8rem; }
 
   @media (max-width:640px){
     .case-stamp{ font-size:1rem; padding:0.3rem 1.4rem; right:-1rem; top:1.2rem; }
@@ -164,13 +182,17 @@
     <p class="lede">The Founder's Day Cup has vanished from its display case, just two days before the ceremony. The only clues left behind are strange number sequences. The Principal has called in a junior detective to crack the case: <strong>you</strong>.</p>
     <div class="name-input-row">
       <input type="text" id="playerName" placeholder="Enter your detective name" maxlength="24">
-      <button class="big-btn" id="startBtn">Begin Investigation →</button>
     </div>
+    <div class="session-row">
+      <div class="sr-label">Session code (optional — only if your teacher gave you one)</div>
+      <input type="text" id="sessionCodeInput" placeholder="e.g. 482913" maxlength="6" inputmode="numeric">
+    </div>
+    <button class="big-btn" id="startBtn">Begin Investigation →</button>
     <div class="rules-list">
       <div>🔍 <span>Crack every clue by solving the number pattern behind it.</span></div>
       <div>⏱️ <span>You have 18 minutes before the ceremony starts. The clock is ticking.</span></div>
       <div>💭 <span>Some clues need extra sharp thinking — watch for the flag.</span></div>
-      <div>🎯 <span>One shot per clue — read carefully before you answer.</span></div>
+      <div>🎯 <span>You get 2 tries per clue. If you're still stuck after that, we'll show you the answer and you can move on.</span></div>
     </div>
   </div>
 </div>
@@ -292,7 +314,7 @@
   <div class="screen-inner">
     <div class="stage-label">Clue 3 of 5</div>
     <h2 class="stage-title">The Vault Code</h2>
-    <div class="flavor-text">Inside the PE storeroom, a old safe sits behind the mats — and it needs a code far bigger than anything you've seen yet. No listing terms one by one here. You'll need the formula to jump straight to the answer.</div>
+    <div class="flavor-text">Inside the PE storeroom, an old safe sits behind the mats — and it needs a code far bigger than anything you've seen yet. No listing terms one by one here. You'll need the formula to jump straight to the answer.</div>
     <div class="qgrid">
 
       <div class="qblock" id="block-q9">
@@ -453,9 +475,23 @@
       <div class="cf-score-row"><span class="big-score" id="cfScore">0 / 18</span><span>clues cracked</span></div>
       <div class="cf-rank" id="cfRank">Rookie Detective 🔍</div>
       <div class="cf-log" id="cfLog"></div>
-      <div class="cf-closing">Every good detective double-checks their working. If any clue tripped you up, it's worth revisiting the Number Sequences workbook before the next case.</div>
+      <div class="cf-closing">Every good detective double-checks their working. Your personal Learning Gaps report below shows exactly which skills to revisit.</div>
     </div>
-    <div class="screenshot-note">📸 Screenshot this case file to compare with your fellow detectives.</div>
+    <div class="case-actions">
+      <button class="big-btn" id="viewGapsBtn">See My Learning Gaps Report →</button>
+    </div>
+    <div class="screenshot-note">📸 Screenshot your case file to compare with your fellow detectives.</div>
+  </div>
+</div>
+
+<!-- LEARNING GAPS REPORT -->
+<div class="screen" id="screen-gaps">
+  <div class="screen-inner">
+    <div class="eyebrow">Learning Gaps Report</div>
+    <h2 class="stage-title">Where to Focus Next</h2>
+    <p class="lede" style="font-size:0.92rem; opacity:0.85; margin-bottom:1.4rem;">A "gap" means a question was wrong, or took two tries to get right (even if you got there eventually). These practice questions are just for you — they don't affect your score.</p>
+    <div id="gapsContainer"></div>
+    <div class="continue-wrap"><button class="ghost-btn" id="backToCaseFile">← Back to Case File</button></div>
   </div>
 </div>
 
@@ -467,17 +503,90 @@
     4: ['q12a','q12b','q13','q14'],
     5: ['q15','q16']
   };
+  const QID_SKILL = {
+    q1:'skill1', q2:'skill1', q3:'skill1', q4:'skill1',
+    q5:'skill2', q6:'skill2', q7:'skill2', q8:'skill2',
+    q9:'skill3', q10a:'skill3', q10b:'skill3', q11:'skill3',
+    q12a:'skill4', q12b:'skill4', q13:'skill4', q14:'skill4', q15:'skill4', q16:'skill4'
+  };
+  const SKILL_INFO = {
+    skill1: {
+      name: 'Recognising the Pattern',
+      explain: "To find a sequence's pattern, subtract each term from the one before it. If the result is always the same number, that's the common difference, d.",
+      example: 'Example: 8, 12, 16, 20 → 12−8=4, 16−12=4 → d = 4.',
+      practiceQ: '44, 40, 36, 32, ... What is the common difference?',
+      practiceType: 'mcq',
+      practiceOptions: [{text:'−4',correct:true},{text:'4',correct:false},{text:'−8',correct:false},{text:'40',correct:false}],
+      pointer: "Revisit Slide 5 (\"What's the rule?\") in the Learning Deck."
+    },
+    skill2: {
+      name: 'Finding & Simplifying Tn',
+      explain: 'Tn = dn + c. Find d from the common difference, then substitute n=1 (and its term) to solve for c.',
+      example: 'Example: 3, 9, 15, 21 → d=6, then 6(1)+c=3 → c=−3. So Tn = 6n − 3.',
+      practiceQ: 'Find Tn for: 5, 13, 21, 29, ...',
+      practiceType: 'formula',
+      practiceAnswer: {d:8, c:-3},
+      pointer: 'Revisit Slides 6–8 ("Cracking the formula") in the Learning Deck.'
+    },
+    skill3: {
+      name: 'Working Beyond the Sequence',
+      explain: 'Once you have Tn = dn + c, you can find ANY term by substituting its position n — no need to list every term in between.',
+      example: 'Example: Tn = 4n + 5. T20 = 4(20)+5 = 85.',
+      practiceQ: 'Tn = 6n + 1. What is T30?',
+      practiceType: 'numeric',
+      practiceAnswer: 181,
+      pointer: "Revisit Slide 9 (\"You don't need to count all the way to 50\") in the Learning Deck."
+    },
+    skill4: {
+      name: 'Real-World Application & Reasoning',
+      explain: "Real-world sequences still follow Tn = dn + c. To check if a value is achievable, solve for n — if n isn't a whole number, that value is impossible.",
+      example: 'Example: Tn = 6n + 6. Is 100 achievable? 6n+6=100 → n=15.67 — not whole, so no.',
+      practiceQ: 'Using Tn = 6n + 6, is 78 an achievable value?',
+      practiceType: 'mcq',
+      practiceOptions: [{text:'Yes — n = 12, a whole number',correct:true},{text:"No, it isn't achievable",correct:false}],
+      pointer: 'Revisit Slide 10 ("The canteen table problem") in the Learning Deck, and Clue 5 in this game.'
+    }
+  };
+
   const ALL_QIDS = Object.values(STAGE_QIDS).flat();
   const TOTAL = ALL_QIDS.length;
   const state = {};
-  ALL_QIDS.forEach(q => state[q] = {done:false, correct:false});
+  ALL_QIDS.forEach(q => state[q] = {attempts:0, correct:false, done:false});
 
-  const screens = ['intro','stage1','stage2','stage3','stage4','stage5','outro','results'];
+  const screens = ['intro','stage1','stage2','stage3','stage4','stage5','outro','results','gaps'];
   let currentScreen = 'intro';
   let playerName = 'Detective';
+  let sessionCode = '';
   let timerSeconds = 18*60;
   let timerHandle = null;
-  const STORAGE_KEY = 'numseq-game-progress-v1';
+  const STORAGE_KEY = 'numseq-game-progress-v2';
+
+  // ---------- Class Tracker logging (fire-and-forget; never blocks gameplay) ----------
+  // Paste your deployed Google Apps Script Web App URL below to enable the live class tracker.
+  // Leave as-is to play the game standalone with no teacher dashboard.
+  const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyH1VgE4IFPf5lAbebtdlid4zQIpOG0a39uaR-mzVPKky434xJEgDK94LCe1gigv-5DdA/exec';
+
+  function stageOf(qid){
+    for(const [stage, qids] of Object.entries(STAGE_QIDS)){ if(qids.includes(qid)) return stage; }
+    return '';
+  }
+  function logAttempt(qid, attemptsUsed, correct){
+    if(!BACKEND_URL || BACKEND_URL.indexOf('PASTE_') === 0) return;
+    try{
+      fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({
+          sessionCode: sessionCode || '',
+          studentName: playerName,
+          round: stageOf(qid),
+          skill: SKILL_INFO[QID_SKILL[qid]] ? SKILL_INFO[QID_SKILL[qid]].name : '',
+          attempts: attemptsUsed,
+          correct: correct
+        })
+      }).catch(()=>{});
+    }catch(e){}
+  }
 
   function showScreen(name){
     screens.forEach(s => document.getElementById('screen-'+s).classList.toggle('active', s === name));
@@ -505,7 +614,7 @@
     hudStages.appendChild(dot);
   }
   function updateHudStages(){
-    const stageIdx = currentScreen.startsWith('stage') ? parseInt(currentScreen.replace('stage','')) : (currentScreen==='outro'||currentScreen==='results' ? 6 : 0);
+    const stageIdx = currentScreen.startsWith('stage') ? parseInt(currentScreen.replace('stage','')) : (['outro','results','gaps'].includes(currentScreen) ? 6 : 0);
     document.querySelectorAll('.hud-stage-dot').forEach(dot=>{
       const n = parseInt(dot.dataset.stage);
       const allDone = STAGE_QIDS[n].every(q=>state[q].done);
@@ -522,38 +631,44 @@
     saveProgress();
   }
 
-  function markResult(qid, correct){
+  function finalizeQuestion(qid, correct){
     state[qid].done = true;
     state[qid].correct = correct;
     const block = document.getElementById('block-'+qid);
     if(block) block.classList.add('solved');
-    for(const [stage, qids] of Object.entries(STAGE_QIDS)){
-      if(qids.includes(qid)){ checkStageComplete(parseInt(stage)); break; }
-    }
+    logAttempt(qid, state[qid].attempts, correct);
+    checkStageComplete(parseInt(stageOf(qid)));
   }
 
-  // MCQ
+  // ---------- MCQ: 2 attempts ----------
   document.querySelectorAll('.opt-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const qid = btn.dataset.qid;
-      if(state[qid].done) return;
+      if(state[qid].done || btn.disabled) return;
+      state[qid].attempts++;
+      const isCorrect = btn.dataset.correct === 'true';
       const group = document.querySelectorAll(`.opt-btn[data-qid="${qid}"]`);
       const fb = document.getElementById('fb-'+qid);
-      const isCorrect = btn.dataset.correct === 'true';
-      group.forEach(b=>{
-        b.disabled = true;
-        if(b.dataset.correct === 'true') b.classList.add('correct');
-        else if(b === btn) b.classList.add('incorrect');
-      });
-      if(fb){
-        fb.textContent = isCorrect ? '✓ Correct!' : '✗ Not quite — the correct answer is highlighted above.';
-        fb.className = 'feedback ' + (isCorrect ? 'good' : 'bad');
+      if(isCorrect){
+        group.forEach(b=>{ b.disabled = true; if(b.dataset.correct === 'true') b.classList.add('correct'); });
+        fb.textContent = '✓ Correct!'; fb.className = 'feedback good';
+        finalizeQuestion(qid, true);
+      } else {
+        btn.classList.add('incorrect'); btn.disabled = true;
+        if(state[qid].attempts >= 2){
+          group.forEach(b=>{ b.disabled = true; if(b.dataset.correct === 'true') b.classList.add('correct'); });
+          fb.textContent = "✗ Still not quite — the correct answer is highlighted. Worth asking a friend or teacher if you're unsure why.";
+          fb.className = 'feedback bad';
+          finalizeQuestion(qid, false);
+        } else {
+          fb.textContent = '✗ Not quite — try again!'; fb.className = 'feedback bad';
+        }
       }
-      markResult(qid, isCorrect);
+      saveProgress();
     });
   });
 
-  // Formula check
+  // ---------- Formula check: 2 attempts ----------
   document.querySelectorAll('[data-check="formula"]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const qid = btn.dataset.qid;
@@ -566,15 +681,25 @@
       const expD = parseInt(btn.dataset.d, 10);
       const expC = parseInt(btn.dataset.c, 10);
       if(isNaN(dVal) || isNaN(cVal)){ fb.textContent = 'Fill in both boxes with a number first.'; fb.className = 'feedback bad'; return; }
+      state[qid].attempts++;
       const isCorrect = (dVal === expD && cVal === expC);
-      dInput.disabled = true; cInput.disabled = true; btn.disabled = true;
-      if(isCorrect){ fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; }
-      else { fb.textContent = `✗ Not quite — the correct expression was Tn = ${expD}n + (${expC}).`; fb.className = 'feedback bad'; }
-      markResult(qid, isCorrect);
+      if(isCorrect){
+        dInput.disabled = true; cInput.disabled = true; btn.disabled = true;
+        fb.textContent = '✓ Correct!'; fb.className = 'feedback good';
+        finalizeQuestion(qid, true);
+      } else if(state[qid].attempts >= 2){
+        dInput.disabled = true; cInput.disabled = true; btn.disabled = true;
+        fb.textContent = `✗ Still not quite — the correct expression was Tn = ${expD}n + (${expC}). Worth asking a friend or teacher if you're unsure why.`;
+        fb.className = 'feedback bad';
+        finalizeQuestion(qid, false);
+      } else {
+        fb.textContent = '✗ Not quite — try again!'; fb.className = 'feedback bad';
+      }
+      saveProgress();
     });
   });
 
-  // Numeric check
+  // ---------- Numeric check: 2 attempts ----------
   document.querySelectorAll('[data-check="numeric"]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const qid = btn.dataset.qid;
@@ -584,11 +709,21 @@
       const val = parseFloat(input.value);
       const exp = parseFloat(btn.dataset.ans);
       if(isNaN(val)){ fb.textContent = 'Type a number first.'; fb.className = 'feedback bad'; return; }
+      state[qid].attempts++;
       const isCorrect = Math.abs(val - exp) < 0.01;
-      input.disabled = true; btn.disabled = true;
-      if(isCorrect){ fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; }
-      else { fb.textContent = `✗ Not quite — the correct answer was ${exp}.`; fb.className = 'feedback bad'; }
-      markResult(qid, isCorrect);
+      if(isCorrect){
+        input.disabled = true; btn.disabled = true;
+        fb.textContent = '✓ Correct!'; fb.className = 'feedback good';
+        finalizeQuestion(qid, true);
+      } else if(state[qid].attempts >= 2){
+        input.disabled = true; btn.disabled = true;
+        fb.textContent = `✗ Still not quite — the correct answer was ${exp}. Worth asking a friend or teacher if you're unsure why.`;
+        fb.className = 'feedback bad';
+        finalizeQuestion(qid, false);
+      } else {
+        fb.textContent = '✗ Not quite — try again!'; fb.className = 'feedback bad';
+      }
+      saveProgress();
     });
   });
 
@@ -607,6 +742,7 @@
   document.getElementById('startBtn').addEventListener('click', ()=>{
     const nameVal = document.getElementById('playerName').value.trim();
     playerName = nameVal || 'Detective';
+    sessionCode = document.getElementById('sessionCodeInput').value.trim();
     document.getElementById('hudName').textContent = playerName;
     startTimer();
     showScreen('stage1');
@@ -624,6 +760,11 @@
     renderResults();
     showScreen('results');
   });
+  document.getElementById('viewGapsBtn').addEventListener('click', ()=>{
+    renderGapsReport();
+    showScreen('gaps');
+  });
+  document.getElementById('backToCaseFile').addEventListener('click', ()=> showScreen('results'));
 
   // Timer
   function startTimer(){
@@ -633,10 +774,7 @@
       if(timerSeconds <= 0){
         timerSeconds = 0;
         updateTimerDisplay();
-        stopTimer();
-        stopAllInputs();
-        renderResults();
-        showScreen('results');
+        handleTimeUp();
         return;
       }
       updateTimerDisplay();
@@ -654,6 +792,18 @@
   }
   function stopAllInputs(){
     document.querySelectorAll('.opt-btn, .check-btn, .formula-row input, .numeric-row input').forEach(el=> el.disabled = true);
+  }
+  function handleTimeUp(){
+    stopTimer();
+    ALL_QIDS.forEach(q=>{
+      if(!state[q].done){
+        state[q].done = true; state[q].correct = false;
+        logAttempt(q, 'Timed out', false);
+      }
+    });
+    stopAllInputs();
+    renderResults();
+    showScreen('results');
   }
 
   // Results rendering
@@ -682,11 +832,120 @@
     }
   }
 
-  // Persistence
+  // ---------- Learning Gaps report ----------
+  function renderGapsReport(){
+    const container = document.getElementById('gapsContainer');
+    container.innerHTML = '';
+    Object.keys(SKILL_INFO).forEach(skillKey=>{
+      const qids = Object.keys(QID_SKILL).filter(q => QID_SKILL[q] === skillKey);
+      const gapCount = qids.filter(q => !state[q].correct || state[q].attempts >= 2).length;
+      const info = SKILL_INFO[skillKey];
+      const card = document.createElement('div');
+      if(gapCount === 0){
+        card.className = 'gap-card solid';
+        card.innerHTML = `<div class="gap-head">✅ ${info.name}</div><p>Solid work — no gaps here. Nice job!</p>`;
+        container.appendChild(card);
+      } else {
+        card.className = 'gap-card';
+        card.innerHTML = `
+          <div class="gap-head">🔎 ${info.name} <span class="gap-count">${gapCount} question${gapCount>1?'s':''} to review</span></div>
+          <p><strong>Quick re-cap:</strong> ${info.explain}</p>
+          <p style="margin-top:0.4rem;"><strong>Worked example:</strong> ${info.example}</p>
+          <div class="gap-practice-inner" id="gap-${skillKey}"></div>
+          <p class="gap-pointer">📍 ${info.pointer}</p>
+        `;
+        container.appendChild(card);
+        buildGapPractice(skillKey, info);
+      }
+    });
+  }
+
+  function buildGapPractice(skillKey, info){
+    const el = document.getElementById('gap-'+skillKey);
+    let attempts = 0;
+    let done = false;
+    const qp = document.createElement('p');
+    qp.style.marginBottom = '0.5rem';
+    qp.innerHTML = '<strong>Low-stakes practice</strong> (doesn\'t affect your score): ' + info.practiceQ;
+    el.appendChild(qp);
+    const fb = document.createElement('div'); fb.className = 'feedback';
+
+    if(info.practiceType === 'mcq'){
+      const opts = document.createElement('div'); opts.className = 'mcq-options';
+      const shuffled = [...info.practiceOptions].sort(()=> Math.random()-0.5);
+      shuffled.forEach(opt=>{
+        const b = document.createElement('button');
+        b.className = 'opt-btn'; b.textContent = opt.text;
+        b.addEventListener('click', ()=>{
+          if(done || b.disabled) return;
+          attempts++;
+          if(opt.correct){
+            opts.querySelectorAll('button').forEach(x=>x.disabled=true);
+            b.classList.add('correct');
+            fb.textContent = '✓ Correct!'; fb.className = 'feedback good';
+            done = true;
+          } else {
+            b.classList.add('incorrect'); b.disabled = true;
+            if(attempts >= 2){
+              opts.querySelectorAll('button').forEach((x,i)=>{ x.disabled = true; if(shuffled[i].correct) x.classList.add('correct'); });
+              fb.textContent = "Here's the correct answer, highlighted above."; fb.className = 'feedback bad';
+              done = true;
+            } else {
+              fb.textContent = 'Not quite — try once more.'; fb.className = 'feedback bad';
+            }
+          }
+        });
+        opts.appendChild(b);
+      });
+      el.appendChild(opts);
+    } else if(info.practiceType === 'numeric'){
+      const row = document.createElement('div'); row.className = 'numeric-row';
+      const inp = document.createElement('input'); inp.type = 'text'; inp.inputMode = 'numeric'; inp.placeholder = 'answer';
+      const btn = document.createElement('button'); btn.className = 'check-btn'; btn.textContent = 'Check';
+      btn.addEventListener('click', ()=>{
+        if(done) return;
+        attempts++;
+        const val = parseFloat(inp.value);
+        if(Math.abs(val - info.practiceAnswer) < 0.01){
+          fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; inp.disabled = true; btn.disabled = true; done = true;
+        } else if(attempts >= 2){
+          fb.textContent = 'The correct answer was ' + info.practiceAnswer + '.'; fb.className = 'feedback bad'; inp.disabled = true; btn.disabled = true; done = true;
+        } else {
+          fb.textContent = 'Not quite — try once more.'; fb.className = 'feedback bad';
+        }
+      });
+      row.appendChild(inp); row.appendChild(btn);
+      el.appendChild(row);
+    } else if(info.practiceType === 'formula'){
+      const row = document.createElement('div'); row.className = 'formula-row';
+      const tnLabel = document.createElement('span'); tnLabel.textContent = 'Tn = ';
+      const dInp = document.createElement('input'); dInp.type = 'text'; dInp.placeholder = 'd';
+      const midLabel = document.createElement('span'); midLabel.textContent = ' n + ';
+      const cInp = document.createElement('input'); cInp.type = 'text'; cInp.placeholder = 'c';
+      const btn = document.createElement('button'); btn.className = 'check-btn'; btn.textContent = 'Check';
+      btn.addEventListener('click', ()=>{
+        if(done) return;
+        attempts++;
+        const dv = parseInt(dInp.value,10), cv = parseInt(cInp.value,10);
+        if(dv === info.practiceAnswer.d && cv === info.practiceAnswer.c){
+          fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; dInp.disabled = true; cInp.disabled = true; btn.disabled = true; done = true;
+        } else if(attempts >= 2){
+          fb.textContent = `The correct expression was Tn = ${info.practiceAnswer.d}n + (${info.practiceAnswer.c}).`; fb.className = 'feedback bad'; dInp.disabled = true; cInp.disabled = true; btn.disabled = true; done = true;
+        } else {
+          fb.textContent = 'Not quite — try once more.'; fb.className = 'feedback bad';
+        }
+      });
+      row.appendChild(tnLabel); row.appendChild(dInp); row.appendChild(midLabel); row.appendChild(cInp); row.appendChild(btn);
+      el.appendChild(row);
+    }
+    el.appendChild(fb);
+  }
+
+  // ---------- Persistence ----------
   function saveProgress(){
     try{
-      const data = { playerName, timerSeconds, currentScreen, state, inputs:{} };
-      document.querySelectorAll('.formula-row input, .numeric-row input').forEach(inp=>{ data.inputs[inp.id] = inp.value; });
+      const data = { playerName, sessionCode, timerSeconds, currentScreen, state, inputs:{} };
+      document.querySelectorAll('.formula-row input, .numeric-row input').forEach(inp=>{ if(inp.id) data.inputs[inp.id] = inp.value; });
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }catch(e){}
   }
@@ -698,8 +957,10 @@
     try{ data = JSON.parse(raw); }catch(e){ return; }
     if(!data) return;
     playerName = data.playerName || 'Detective';
+    sessionCode = data.sessionCode || '';
     document.getElementById('hudName').textContent = playerName;
     document.getElementById('playerName').value = playerName;
+    document.getElementById('sessionCodeInput').value = sessionCode;
     timerSeconds = typeof data.timerSeconds === 'number' ? data.timerSeconds : timerSeconds;
     if(data.inputs){
       Object.keys(data.inputs).forEach(id=>{
@@ -709,7 +970,7 @@
     }
     if(data.state){
       ALL_QIDS.forEach(q=>{
-        if(data.state[q]){ state[q].done = !!data.state[q].done; state[q].correct = !!data.state[q].correct; }
+        if(data.state[q]){ state[q].done = !!data.state[q].done; state[q].correct = !!data.state[q].correct; state[q].attempts = data.state[q].attempts || 0; }
         if(state[q].done){
           const block = document.getElementById('block-'+q);
           if(block) block.classList.add('solved');
@@ -723,15 +984,17 @@
             const btn = row.querySelector('.check-btn'); if(btn) btn.disabled = true;
           }
           const fb = document.getElementById('fb-'+q);
-          if(fb){ fb.textContent = state[q].correct ? '✓ Correct!' : '✗ Recorded.'; fb.className = 'feedback ' + (state[q].correct ? 'good' : 'bad'); }
+          if(fb){ fb.textContent = state[q].correct ? '✓ Correct!' : 'Recorded.'; fb.className = 'feedback ' + (state[q].correct ? 'good' : 'bad'); }
         }
       });
     }
     for(let i=1;i<=5;i++) checkStageComplete(i);
-    if(data.currentScreen && screens.includes(data.currentScreen)){
-      if(data.currentScreen !== 'intro'){ showScreen(data.currentScreen); if(!timerHandle && data.currentScreen.startsWith('stage')) startTimer(); }
+    if(data.currentScreen && screens.includes(data.currentScreen) && data.currentScreen !== 'intro'){
+      showScreen(data.currentScreen);
+      if(!timerHandle && data.currentScreen.startsWith('stage')) startTimer();
+      if(data.currentScreen === 'results') renderResults();
+      if(data.currentScreen === 'gaps') renderGapsReport();
     }
-    if(data.currentScreen === 'results') renderResults();
     updateHudStages();
   }
 
