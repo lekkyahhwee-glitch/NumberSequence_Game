@@ -24,9 +24,9 @@
   h1,h2,h3{ font-family:var(--font-display); line-height:1.1; letter-spacing:-0.01em; }
   p{ line-height:1.6; }
 
-  .screen{ display:none; min-height:100vh; min-height:100dvh; flex-direction:column; align-items:center; justify-content:center; padding:calc(56px + 5vh) 6vw 5vh; overflow-y:auto; }
-  .screen.active{ display:flex; }
-  .screen-inner{ max-width:760px; width:100%; }
+  .screen{ display:none; min-height:100vh; min-height:100dvh; height:100vh; height:100dvh; padding:calc(56px + 5vh) 6vw 5vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .screen.active{ display:block; }
+  .screen-inner{ max-width:760px; width:100%; margin:0 auto; }
 
   .top-hud{
     position:fixed; top:0; left:0; right:0; height:56px; z-index:100; background:var(--ink-soft);
@@ -50,6 +50,14 @@
     font-family:var(--font-mono); font-size:0.65rem; background:none; border:1px solid var(--line); color:var(--paper);
     border-radius:20px; padding:0.35rem 0.6rem; cursor:pointer; opacity:0.6; white-space:nowrap;
   }
+
+  /* ---------- Confirmation modal (custom — native confirm() can be blocked in embedded iframes) ---------- */
+  .modal-backdrop{ display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; z-index:300; padding:1.5rem; }
+  .modal-backdrop.open{ display:flex; }
+  .modal-box{ background:var(--ink-soft); border:1px solid var(--line); border-radius:14px; padding:1.6rem; max-width:380px; width:100%; }
+  .modal-box h3{ font-size:1.15rem; margin-bottom:0.6rem; }
+  .modal-box p{ font-size:0.9rem; opacity:0.85; margin-bottom:1.2rem; }
+  .modal-box .row{ display:flex; gap:0.7rem; flex-wrap:wrap; }
 
   /* ---------- Intro ---------- */
   .badge-icon{ font-size:3rem; margin-bottom:1rem; }
@@ -492,6 +500,17 @@
     <p class="lede" style="font-size:0.92rem; opacity:0.85; margin-bottom:1.4rem;">A "gap" means a question was wrong, or took two tries to get right (even if you got there eventually). These practice questions are just for you — they don't affect your score.</p>
     <div id="gapsContainer"></div>
     <div class="continue-wrap"><button class="ghost-btn" id="backToCaseFile">← Back to Case File</button></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="resetModal">
+  <div class="modal-box">
+    <h3>Start a brand new case?</h3>
+    <p>This will erase your current progress on this device. There's no undo.</p>
+    <div class="row">
+      <button class="big-btn" id="resetConfirmBtn">Yes, start over</button>
+      <button class="ghost-btn" id="resetCancelBtn">Cancel</button>
+    </div>
   </div>
 </div>
 
@@ -998,8 +1017,14 @@
     updateHudStages();
   }
 
+  const resetModal = document.getElementById('resetModal');
   document.getElementById('hudReset').addEventListener('click', ()=>{
-    if(!confirm('Start a brand new case? This will erase your current progress.')) return;
+    resetModal.classList.add('open');
+  });
+  document.getElementById('resetCancelBtn').addEventListener('click', ()=>{
+    resetModal.classList.remove('open');
+  });
+  document.getElementById('resetConfirmBtn').addEventListener('click', ()=>{
     try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
     location.reload();
   });
