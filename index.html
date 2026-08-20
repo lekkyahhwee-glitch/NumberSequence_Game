@@ -126,6 +126,13 @@
   .feedback.bad{ color:#FF9C8F; }
   .attempts-left{ font-family:var(--font-mono); font-size:0.7rem; opacity:0.5; margin-top:0.3rem; }
 
+  .hint-box, .scaffold-box{
+    display:none; font-size:0.85rem; background:rgba(255,255,255,0.05); border-left:3px solid var(--gold);
+    padding:0.65rem 0.85rem; border-radius:6px; margin-top:0.6rem; line-height:1.55;
+  }
+  .hint-box.show, .scaffold-box.show{ display:block; }
+  .scaffold-box{ border-left-color:var(--coral); font-family:var(--font-mono); font-size:0.82rem; white-space:pre-line; }
+
   .continue-wrap{ margin-top:1.8rem; text-align:center; }
   .continue-wrap .hint-note{ font-family:var(--font-mono); font-size:0.75rem; opacity:0.55; margin-top:0.6rem; }
 
@@ -536,6 +543,7 @@
       practiceQ: '44, 40, 36, 32, ... What is the common difference?',
       practiceType: 'mcq',
       practiceOptions: [{text:'−4',correct:true},{text:'4',correct:false},{text:'−8',correct:false},{text:'40',correct:false}],
+      practiceWorking: 'Step 1: 40 − 44 = −4\nStep 2: 36 − 40 = −4, and 32 − 36 = −4 → same difference every time\nAnswer: d = −4',
       pointer: "Revisit Slide 5 (\"What's the rule?\") in the Learning Deck."
     },
     skill2: {
@@ -545,6 +553,7 @@
       practiceQ: 'Find Tn for: 5, 13, 21, 29, ...',
       practiceType: 'formula',
       practiceAnswer: {d:8, c:-3},
+      practiceWorking: 'Step 1: d = 13 − 5 = 8\nStep 2: n=1, T1=5 → 8(1)+c=5 → c=−3\nAnswer: Tn = 8n − 3',
       pointer: 'Revisit Slides 6–8 ("Cracking the formula") in the Learning Deck.'
     },
     skill3: {
@@ -554,6 +563,7 @@
       practiceQ: 'Tn = 6n + 1. What is T30?',
       practiceType: 'numeric',
       practiceAnswer: 181,
+      practiceWorking: 'Step 1: T30 = 6(30) + 1\nStep 2: = 180 + 1\nAnswer: T30 = 181',
       pointer: "Revisit Slide 9 (\"You don't need to count all the way to 50\") in the Learning Deck."
     },
     skill4: {
@@ -563,6 +573,7 @@
       practiceQ: 'Using Tn = 6n + 6, is 78 an achievable value?',
       practiceType: 'mcq',
       practiceOptions: [{text:'Yes — n = 12, a whole number',correct:true},{text:"No, it isn't achievable",correct:false}],
+      practiceWorking: 'Step 1: 6n + 6 = 78\nStep 2: 6n = 72\nStep 3: n = 12 — a whole number\nAnswer: Yes, 78 is achievable',
       pointer: 'Revisit Slide 10 ("The canteen table problem") in the Learning Deck, and Clue 5 in this game.'
     }
   };
@@ -659,6 +670,42 @@
     checkStageComplete(parseInt(stageOf(qid)));
   }
 
+  // ---------- Wrong-answer explanations: a guiding hint after try 1, full worked reasoning after try 2 ----------
+  const EXPLANATIONS = {
+    q1: { hint: 'Subtract the 1st term from the 2nd term. What do you get?', explain: 'Step 1: 12 − 7 = 5\nStep 2: 17 − 12 = 5, and 22 − 17 = 5 → same difference every time\nAnswer: d = 5' },
+    q2: { hint: 'The numbers are getting smaller — subtract consecutive terms and watch the sign.', explain: 'Step 1: 44 − 50 = −6\nStep 2: 38 − 44 = −6, and 32 − 38 = −6 → same difference every time\nAnswer: d = −6 (negative, because the sequence decreases)' },
+    q3: { hint: 'Check each pair of numbers — is the SAME amount added every time?', explain: 'Step 1: 4 − 2 = 2\nStep 2: 8 − 4 = 4, and 16 − 8 = 8 → the gap keeps changing, not constant\nAnswer: 2, 4, 8, 16 has no fixed common difference — that\'s the fake pattern' },
+    q4: { hint: 'Find the difference between the first two terms, then use that same jump for every step after.', explain: 'Step 1: 13 − 4 = 9 → the difference should be 9 throughout\nStep 2: Term 3 should be 13 + 9 = 22 (not 23 as smudged)\nStep 3: Check: 22 + 9 = 31, and 31 + 9 = 40 — both correct' },
+    q5: { hint: 'First find d, the common difference. Then substitute n = 1 into Tn = dn + c to solve for c.', explain: 'Step 1: d = 16 − 9 = 7\nStep 2: n=1, T1=9 → 7(1)+c=9 → c=2\nAnswer: Tn = 7n + 2' },
+    q6: { hint: 'This sequence is decreasing, so d will be negative. Find d, then use n = 1 to find c.', explain: 'Step 1: d = 33 − 40 = −7\nStep 2: n=1, T1=40 → −7(1)+c=40 → c=47\nAnswer: Tn = −7n + 47' },
+    q7: { hint: 'Set the formula equal to 72, then solve the equation for n.', explain: 'Step 1: 7n + 2 = 72\nStep 2: 7n = 70\nAnswer: n = 10 — locker position 10 has the code 72' },
+    q8: { hint: 'Find the common difference (it will be negative here), then use n = 1 to find c.', explain: 'Step 1: d = 47 − 55 = −8\nStep 2: n=1, T1=55 → −8(1)+c=55 → c=63\nAnswer: Tn = −8n + 63' },
+    q9: { hint: 'Substitute n = 40 directly into the formula — no need to list any terms in between.', explain: 'Step 1: T40 = 5(40) + 3\nStep 2: = 200 + 3\nAnswer: T40 = 203' },
+    q10a: { hint: 'Find d first, then use n = 1 to find c — same method as before.', explain: 'Step 1: d = 18 − 11 = 7\nStep 2: n=1, T1=11 → 7(1)+c=11 → c=4\nAnswer: Tn = 7n + 4' },
+    q10b: { hint: 'Substitute n = 60 directly into the formula.', explain: 'Step 1: T60 = 7(60) + 4\nStep 2: = 420 + 4\nAnswer: T60 = 424' },
+    q11: { hint: 'Substitute n = 1000 directly into the formula — that\'s the whole point of having one.', explain: 'Step 1: T1000 = 5(1000) + 3\nStep 2: = 5000 + 3\nAnswer: T1000 = 5003' },
+    q12a: { hint: 'Find d from the difference between rows, then use n = 1 to find c.', explain: 'Step 1: d = 16 − 10 = 6\nStep 2: n=1, T1=10 → 6(1)+c=10 → c=4\nAnswer: Tn = 6n + 4' },
+    q12b: { hint: 'Substitute n = 15 directly into the formula.', explain: 'Step 1: T15 = 6(15) + 4\nStep 2: = 90 + 4\nAnswer: T15 = 94' },
+    q13: { hint: 'Think about how many separate additions you\'d need to do to reach Row 15 by counting one row at a time.', explain: 'Step 1: Counting row by row needs 14 separate additions to reach Row 15\nStep 2: The formula does it in one substitution: T15 = 6(15) + 4 = 94\nAnswer: Tn is instant for any row, even Row 500' },
+    q14: { hint: 'Substitute n = 25 directly into the formula.', explain: 'Step 1: T25 = 6(25) + 4\nStep 2: = 150 + 4\nAnswer: T25 = 154' },
+    q15: { hint: 'Set the formula equal to 100 and solve for n. Is the result a whole number?', explain: 'Step 1: 6n + 3 = 100\nStep 2: 6n = 97\nStep 3: n = 16.1667 — not a whole number\nConclusion: 100 is impossible in this sequence' },
+    q16: { hint: 'If the exact number in the story turns out to be impossible, what does that mean for the story itself?', explain: 'Step 1: Clue 5 showed 100 can\'t be reached by this pattern (n isn\'t whole)\nStep 2: The Head Prefect\'s own numbers don\'t check out mathematically\nConclusion: the story they told must be false' }
+  };
+  Object.keys(EXPLANATIONS).forEach(qid=>{
+    const fb = document.getElementById('fb-'+qid);
+    if(!fb) return;
+    const scaffoldBox = document.createElement('div');
+    scaffoldBox.className = 'scaffold-box'; scaffoldBox.id = 'scaffold-'+qid;
+    scaffoldBox.textContent = EXPLANATIONS[qid].explain;
+    const hintBox = document.createElement('div');
+    hintBox.className = 'hint-box'; hintBox.id = 'hint-'+qid;
+    hintBox.textContent = '💡 ' + EXPLANATIONS[qid].hint;
+    fb.insertAdjacentElement('afterend', scaffoldBox);
+    fb.insertAdjacentElement('afterend', hintBox);
+  });
+  function showHint(qid){ const h = document.getElementById('hint-'+qid); if(h) h.classList.add('show'); }
+  function showScaffold(qid){ const s = document.getElementById('scaffold-'+qid); if(s) s.classList.add('show'); showHint(qid); }
+
   // ---------- MCQ: 2 attempts ----------
   document.querySelectorAll('.opt-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -676,11 +723,13 @@
         btn.classList.add('incorrect'); btn.disabled = true;
         if(state[qid].attempts >= 2){
           group.forEach(b=>{ b.disabled = true; if(b.dataset.correct === 'true') b.classList.add('correct'); });
-          fb.textContent = "✗ Still not quite — the correct answer is highlighted. Worth asking a friend or teacher if you're unsure why.";
+          fb.textContent = "✗ Still not quite — here's the full reasoning below.";
           fb.className = 'feedback bad';
+          showScaffold(qid);
           finalizeQuestion(qid, false);
         } else {
           fb.textContent = '✗ Not quite — try again!'; fb.className = 'feedback bad';
+          showHint(qid);
         }
       }
       saveProgress();
@@ -708,11 +757,16 @@
         finalizeQuestion(qid, true);
       } else if(state[qid].attempts >= 2){
         dInput.disabled = true; cInput.disabled = true; btn.disabled = true;
-        fb.textContent = `✗ Still not quite — the correct expression was Tn = ${expD}n + (${expC}). Worth asking a friend or teacher if you're unsure why.`;
+        fb.textContent = "✗ Still not quite — here's the full reasoning below.";
         fb.className = 'feedback bad';
+        showScaffold(qid);
         finalizeQuestion(qid, false);
       } else {
-        fb.textContent = '✗ Not quite — try again!'; fb.className = 'feedback bad';
+        if(dVal === expD && cVal !== expC){ fb.textContent = '✗ Your d is right — check your c again.'; }
+        else if(cVal === expC && dVal !== expD){ fb.textContent = '✗ Your c is right — double-check d, the common difference.'; }
+        else { fb.textContent = '✗ Not quite — try again!'; }
+        fb.className = 'feedback bad';
+        showHint(qid);
       }
       saveProgress();
     });
@@ -736,11 +790,13 @@
         finalizeQuestion(qid, true);
       } else if(state[qid].attempts >= 2){
         input.disabled = true; btn.disabled = true;
-        fb.textContent = `✗ Still not quite — the correct answer was ${exp}. Worth asking a friend or teacher if you're unsure why.`;
+        fb.textContent = "✗ Still not quite — here's the full reasoning below.";
         fb.className = 'feedback bad';
+        showScaffold(qid);
         finalizeQuestion(qid, false);
       } else {
         fb.textContent = '✗ Not quite — try again!'; fb.className = 'feedback bad';
+        showHint(qid);
       }
       saveProgress();
     });
@@ -888,6 +944,7 @@
     qp.innerHTML = '<strong>Low-stakes practice</strong> (doesn\'t affect your score): ' + info.practiceQ;
     el.appendChild(qp);
     const fb = document.createElement('div'); fb.className = 'feedback';
+    const scaffoldEl = document.createElement('div'); scaffoldEl.className = 'scaffold-box'; scaffoldEl.textContent = info.practiceWorking || '';
 
     if(info.practiceType === 'mcq'){
       const opts = document.createElement('div'); opts.className = 'mcq-options';
@@ -907,7 +964,8 @@
             b.classList.add('incorrect'); b.disabled = true;
             if(attempts >= 2){
               opts.querySelectorAll('button').forEach((x,i)=>{ x.disabled = true; if(shuffled[i].correct) x.classList.add('correct'); });
-              fb.textContent = "Here's the correct answer, highlighted above."; fb.className = 'feedback bad';
+              fb.textContent = "Here's the full working below."; fb.className = 'feedback bad';
+              scaffoldEl.classList.add('show');
               done = true;
             } else {
               fb.textContent = 'Not quite — try once more.'; fb.className = 'feedback bad';
@@ -928,7 +986,8 @@
         if(Math.abs(val - info.practiceAnswer) < 0.01){
           fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; inp.disabled = true; btn.disabled = true; done = true;
         } else if(attempts >= 2){
-          fb.textContent = 'The correct answer was ' + info.practiceAnswer + '.'; fb.className = 'feedback bad'; inp.disabled = true; btn.disabled = true; done = true;
+          fb.textContent = "Here's the full working below."; fb.className = 'feedback bad'; inp.disabled = true; btn.disabled = true; done = true;
+          scaffoldEl.classList.add('show');
         } else {
           fb.textContent = 'Not quite — try once more.'; fb.className = 'feedback bad';
         }
@@ -949,7 +1008,8 @@
         if(dv === info.practiceAnswer.d && cv === info.practiceAnswer.c){
           fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; dInp.disabled = true; cInp.disabled = true; btn.disabled = true; done = true;
         } else if(attempts >= 2){
-          fb.textContent = `The correct expression was Tn = ${info.practiceAnswer.d}n + (${info.practiceAnswer.c}).`; fb.className = 'feedback bad'; dInp.disabled = true; cInp.disabled = true; btn.disabled = true; done = true;
+          fb.textContent = "Here's the full working below."; fb.className = 'feedback bad'; dInp.disabled = true; cInp.disabled = true; btn.disabled = true; done = true;
+          scaffoldEl.classList.add('show');
         } else {
           fb.textContent = 'Not quite — try once more.'; fb.className = 'feedback bad';
         }
@@ -958,6 +1018,7 @@
       el.appendChild(row);
     }
     el.appendChild(fb);
+    el.appendChild(scaffoldEl);
   }
 
   // ---------- Persistence ----------
@@ -1003,7 +1064,14 @@
             const btn = row.querySelector('.check-btn'); if(btn) btn.disabled = true;
           }
           const fb = document.getElementById('fb-'+q);
-          if(fb){ fb.textContent = state[q].correct ? '✓ Correct!' : 'Recorded.'; fb.className = 'feedback ' + (state[q].correct ? 'good' : 'bad'); }
+          if(state[q].correct){
+            if(fb){ fb.textContent = '✓ Correct!'; fb.className = 'feedback good'; }
+          } else {
+            if(fb){ fb.textContent = "✗ Still not quite — here's the full reasoning below."; fb.className = 'feedback bad'; }
+            showScaffold(q);
+          }
+        } else if(state[q].attempts >= 1){
+          showHint(q);
         }
       });
     }
